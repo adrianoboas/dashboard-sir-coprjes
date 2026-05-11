@@ -1,372 +1,277 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEXUS - RADIAL HUD</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>NEXUS - CENTRALIZADOR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" href="https://www.gstatic.com/lamda/images/gemini_sparkle_aurora_33f86dc0c0257da337c63.svg" sizes="any" type="image/svg+xml">
     <script src="https://unpkg.com/lucide@latest"></script>
-
+    
     <style>
-        /* ==========================================================================
-           1. TOKENS AEROESPACIAIS (B&W + TACTICAL HUD)
-           ========================================================================== */
         :root {
-            --hud-bg: #000000;
-            --hud-grid: rgba(255, 255, 255, 0.03);
-            --hud-core: #111111;
-            --hud-active: #ffffff;
-            --hud-text: #ffffff;
-            --hud-muted: rgba(255, 255, 255, 0.4);
-            --hud-border: rgba(255, 255, 255, 0.15);
-            --hud-glow: rgba(255, 255, 255, 0.1);
-            
-            /* Matemática do Arco Radial */
-            --radial-radius: clamp(130px, 20vw, 170px);
-            
-            /* Física de Molas Premium */
-            --spring-eject: cubic-bezier(0.34, 1.56, 0.64, 1);
-            --spring-return: cubic-bezier(0.4, 0, 0.2, 1);
+            --pure-black: #000000;
+            --pure-white: #ffffff;
+            --icon-idle: rgba(255, 255, 255, 0.4);
+            --border-white: rgba(255, 255, 255, 0.15);
+            --transition-premium: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* ==========================================================================
-           2. BASE HUD & VIEWPORT
-           ========================================================================== */
-        * {
-            margin: 0; padding: 0; box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body, html {
-            width: 100%; height: 100vh;
-            background-color: var(--hud-bg);
-            color: var(--hud-text);
-            font-family: 'Inter', sans-serif;
+            width: 100vw;
+            height: 100vh;
+            background: var(--pure-black);
             overflow: hidden;
-            position: relative;
+            font-family: 'Inter', sans-serif;
         }
 
-        /* Grade Tática de Fundo (Aeroespacial) */
-        .hud-overlay {
-            position: fixed; inset: 0; pointer-events: none; z-index: 2;
-            background-image: 
-                linear-gradient(var(--hud-grid) 1px, transparent 1px),
-                linear-gradient(90deg, var(--hud-grid) 1px, transparent 1px);
-            background-size: 40px 40px;
-            background-position: center center;
-        }
-
-        /* Marcadores de Mira (Crosshairs) nos 4 cantos */
-        .crosshair {
-            position: fixed; width: 30px; height: 30px; border: 1px solid var(--hud-muted);
-            pointer-events: none; z-index: 2;
-        }
-        .crosshair.tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
-        .crosshair.tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
-        .crosshair.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
-        .crosshair.br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
-
-        .workspace {
-            position: relative; width: 100%; height: 100vh; z-index: 1;
-        }
-
-        iframe {
-            width: 100%; height: 100%; border: none; background: transparent;
-            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-        }
-
-        /* ==========================================================================
-           3. RADIAL HUB (O MOTOR DE NAVEGAÇÃO)
-           ========================================================================== */
-        .hub-container {
+        .main-container {
             position: fixed;
-            bottom: 40px;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        iframe { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            display: block; 
+            background: var(--pure-black);
+        }
+
+        /* DOCK ESTILO PÍLULA PREMIER */
+        .dock-wrapper {
+            position: fixed;
+            bottom: 0;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 100;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-end;
+            width: min(100%, 100vw);
+            z-index: 9999;
+            pointer-events: none;
         }
 
-        /* Display Contextual Central (Substitui os Tooltips) */
-        .hud-telemetry {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--hud-active);
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid var(--hud-border);
-            padding: 6px 16px;
-            border-radius: 4px;
-            margin-bottom: 24px; /* Espaço para o anel radial */
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s ease;
-            backdrop-filter: blur(4px);
-        }
-
-        .hub-container.active .hud-telemetry {
-            opacity: 1;
+        .dock-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 12px;
+            background: var(--pure-black);
+            border: 1px solid var(--border-white);
+            border-radius: 50px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.9);
+            transition: transform 0.4s ease, opacity 0.3s ease;
             transform: translateY(0);
+            pointer-events: auto;
+            max-width: min(calc(100vw - 36px), 980px);
         }
 
-        /* Container do Círculo Matemático */
-        .radial-menu {
+        .dock-wrapper.hidden .dock-container {
+            transform: translateY(120%);
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .dock-item {
             position: relative;
-            width: 80px;
-            height: 80px;
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: 50%; 
+            cursor: pointer;
+            transition: var(--transition-premium);
+            color: var(--icon-idle);
+            pointer-events: auto;
         }
 
-        /* ==========================================================================
-           4. O NÚCLEO (CORE BUTTON)
-           ========================================================================== */
-        .hub-core {
+        .dock-toggle {
+            margin-top: 8px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--border-white);
+            background: rgba(255,255,255,0.08);
+            color: var(--pure-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition-premium);
+            pointer-events: auto;
             position: relative;
-            width: 64px; height: 64px;
-            border-radius: 50%;
-            background: var(--hud-core);
-            border: 1px solid var(--hud-border);
-            color: var(--hud-text);
-            cursor: pointer;
-            z-index: 10;
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.4s var(--spring-eject), background 0.3s ease;
-            outline: none;
+            overflow: hidden;
         }
 
-        /* Anéis Giroscópicos ao redor do núcleo */
-        .hub-core::before, .hub-core::after {
-            content: ''; position: absolute; inset: -8px;
-            border-radius: 50%;
-            border: 1px solid transparent;
-            border-top-color: var(--hud-muted);
-            border-bottom-color: var(--hud-muted);
-            transition: all 0.6s var(--spring-eject);
-            opacity: 0.3;
-        }
-        
-        .hub-core::after {
-            inset: -16px;
-            border-top-color: transparent; border-bottom-color: transparent;
-            border-left-color: var(--hud-border); border-right-color: var(--hud-border);
+        .dock-toggle:hover {
+            background: rgba(255,255,255,0.16);
         }
 
-        .hub-core:hover {
-            transform: scale(1.05);
-            background: #1a1a1a;
-            box-shadow: 0 0 30px var(--hud-glow);
+        .dock-toggle::before {
+            content: '';
+            display: block;
+            width: 12px;
+            height: 12px;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: rotate(45deg);
+            transition: transform var(--transition-premium), border-color var(--transition-premium);
         }
 
-        .hub-container.active .hub-core {
-            transform: scale(0.8);
-            border-color: var(--hud-active);
+        .dock-wrapper.hidden .dock-toggle::before {
+            transform: rotate(-135deg);
         }
 
-        /* Rotação dos anéis quando ativo */
-        .hub-container.active .hub-core::before { transform: rotate(135deg); opacity: 1; }
-        .hub-container.active .hub-core::after { transform: rotate(-135deg); opacity: 1; }
+        .dock-wrapper.hidden .dock-toggle {
+            background: var(--pure-white);
+            color: var(--pure-black);
+        }
 
-        /* ==========================================================================
-           5. ITENS RADIAIS (FÍSICA ORBITAL CSS)
-           ========================================================================== */
-        .hub-item {
+        .dock-item i {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2px;
+        }
+
+        /* HOVER: Branco Puro e leve subida */
+        .dock-item:hover {
+            color: var(--pure-white);
+            transform: translateY(-2px);
+        }
+
+        /* ATIVO: Inversão Binária Redonda */
+        .dock-item.active {
+            background: var(--pure-white);
+            color: var(--pure-black);
+            transform: scale(0.9);
+        }
+
+        /* NOVO TOOLTIP PÍLULA PREMIUM - REFORMULADO */
+        .tooltip {
             position: absolute;
-            top: 50%; left: 50%;
-            width: 48px; height: 48px;
-            margin: -24px 0 0 -24px; /* Centraliza perfeitamente */
-            border-radius: 50%;
-            background: var(--hud-core);
-            border: 1px solid var(--hud-border);
-            color: var(--hud-muted);
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 5;
-            
-            /* Estado Inicial (Recolhido no centro) */
+            top: -48px; /* Mais alto para não encostar na Dock */
+            left: 50%;
+            transform: translateX(-50%) translateY(8px); /* Escondido */
+            background: var(--pure-black); /* Preto Puro */
+            color: var(--pure-white); /* Texto Branco */
+            padding: 5px 14px; /* Mais largo para o formato pílula */
+            border-radius: 50px; /* Micro Pílula */
+            font-size: 0.6rem; /* Texto menor e discreto */
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px; /* Espaçamento premium entre letras */
             opacity: 0;
             pointer-events: none;
-            
-            /* A MÁGICA MATEMÁTICA DO CSS:
-               1. Gira a angulação base (180deg + (i * 30deg))
-               2. Translada (ejeção do raio) (0px fechado, --radial-radius aberto)
-               3. Desfaz a angulação para o ícone não ficar de cabeça para baixo
-            */
-            transform: 
-                rotate(calc(180deg + (var(--i) * 30deg))) 
-                translate(0) 
-                rotate(calc(-180deg - (var(--i) * 30deg))) 
-                scale(0);
-                
-            transition: 
-                transform 0.4s var(--spring-return), 
-                opacity 0.3s ease,
-                color 0.2s, background 0.2s, border-color 0.2s;
+            transition: opacity 0.2s var(--transition-premium), transform 0.2s var(--transition-premium);
+            border: 1px solid var(--border-white); /* Borda discreta branca */
+            box-shadow: 0 8px 15px rgba(0,0,0,0.7);
+            white-space: nowrap; /* Não quebra linha */
+            z-index: 10000;
         }
 
-        /* Estado Aberto (Ejetado na Órbita) */
-        .hub-container.active .hub-item {
+        .dock-item:hover .tooltip {
             opacity: 1;
-            pointer-events: auto;
-            transform: 
-                rotate(calc(180deg + (var(--i) * 30deg))) 
-                translate(var(--radial-radius)) 
-                rotate(calc(-180deg - (var(--i) * 30deg))) 
-                scale(1);
-            
-            /* Atraso escalonado para efeito cascata */
-            transition: 
-                transform 0.6s var(--spring-eject) calc(var(--i) * 0.04s), 
-                opacity 0.4s ease calc(var(--i) * 0.04s);
+            transform: translateX(-50%) translateY(0px); /* Flutua para cima */
         }
 
-        .hub-item i {
-            width: 20px; height: 20px;
-            stroke-width: 1.5px;
-            transition: transform 0.2s;
+        @media (max-width: 700px) {
+            .dock-container {
+                gap: 5px;
+                padding: 8px 10px;
+            }
+
+            .dock-item, .dock-toggle {
+                width: 38px;
+                height: 38px;
+            }
+
+            .dock-item i, .dock-toggle i {
+                width: 16px;
+                height: 16px;
+            }
         }
 
-        /* Interações Orbitais */
-        .hub-item:hover {
-            color: var(--hud-bg);
-            background: var(--hud-active);
-            transform: 
-                rotate(calc(180deg + (var(--i) * 30deg))) 
-                translate(calc(var(--radial-radius) + 8px)) /* Pula um pouco para fora */
-                rotate(calc(-180deg - (var(--i) * 30deg))) 
-                scale(1.1) !important; /* Force override na transição de base */
-            box-shadow: 0 0 15px var(--hud-glow);
-        }
+        @media (max-width: 500px) {
+            .dock-container {
+                gap: 4px;
+                max-width: calc(100vw - 20px);
+            }
 
-        .hub-item.active {
-            border-color: var(--hud-active);
-            color: var(--hud-active);
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .hub-item.active i {
-            stroke-width: 2.5px;
+            .tooltip {
+                font-size: 0.55rem;
+            }
         }
 
     </style>
 </head>
 <body>
 
-    <div class="hud-overlay"></div>
-    <div class="crosshair tl"></div>
-    <div class="crosshair tr"></div>
-    <div class="crosshair bl"></div>
-    <div class="crosshair br"></div>
-
-    <main class="workspace">
+    <div class="main-container">
         <iframe id="frame" src="tools/tela-inicial.html"></iframe>
-    </main>
+    </div>
 
-    <nav class="hub-container" id="hubContainer">
-        <div class="hud-telemetry" id="telemetry">SISTEMA ONLINE</div>
+    <div class="dock-wrapper" id="dockWrapper">
+        <nav class="dock-container" id="dock">
+        <button class="dock-item active" onclick="abrir('tools/tela-inicial.html', this)">
+            <i data-lucide="home"></i>
+            <span class="tooltip">Início</span>
+        </button>
+        <button class="dock-item" onclick="abrir('tools/dashboard-sir.html', this)">
+            <i data-lucide="chart-column-big"></i>
+            <span class="tooltip">Dashboard</span>
+        </button>
+        <button class="dock-item" onclick="abrir('tools/mascara.html', this)">
+            <i data-lucide="zap"></i>
+            <span class="tooltip">Mascaras</span>
+        </button>
+        <button class="dock-item" onclick="abrir('tools/central_script.html', this)">
+            <i data-lucide="book-type"></i>
+            <span class="tooltip">Central de Texto</span>
+        </button>   
+        <button class="dock-item" onclick="abrir('tools/buscador_siglas_v4.html', this)">
+            <i data-lucide="map-pin-search"></i>
+            <span class="tooltip">CSL</span>
+        </button>
+        <button class="dock-item" onclick="abrir('tools/torpedo.html', this)">
+            <i data-lucide="send"></i>
+            <span class="tooltip">Torpedos</span>
+        </button>
+        <button class="dock-item" onclick="abrir('tools/calculadora.html', this)">
+            <i data-lucide="calculator"></i>
+            <span class="tooltip">Calculadora</span>
+        </button>
+        </nav>
 
-        <div class="radial-menu">
-            <button class="hub-item active" style="--i: 0;" data-label="INÍCIO // CORE" onclick="abrir('tools/tela-inicial.html', this)">
-                <i data-lucide="home"></i>
-            </button>
-            <button class="hub-item" style="--i: 1;" data-label="DASHBOARD // DATA" onclick="abrir('tools/dashboard-sir.html', this)">
-                <i data-lucide="activity"></i>
-            </button>
-            <button class="hub-item" style="--i: 2;" data-label="MÁSCARAS // OVERRIDE" onclick="abrir('tools/mascara.html', this)">
-                <i data-lucide="zap"></i>
-            </button>
-            <button class="hub-item" style="--i: 3;" data-label="CENTRAL DE SCRIPT // TERMINAL" onclick="abrir('tools/central_script.html', this)">
-                <i data-lucide="terminal"></i>
-            </button>   
-            <button class="hub-item" style="--i: 4;" data-label="CONSULTOR CSL // SEARCH" onclick="abrir('tools/buscador_siglas_v4.html', this)">
-                <i data-lucide="radar"></i>
-            </button>
-            <button class="hub-item" style="--i: 5;" data-label="TORPEDOS // COMMS" onclick="abrir('tools/torpedo.html', this)">
-                <i data-lucide="radio"></i>
-            </button>
-            <button class="hub-item" style="--i: 6;" data-label="CALCULADORA // MATH" onclick="abrir('tools/calculadora.html', this)">
-                <i data-lucide="cpu"></i>
-            </button>
-
-            <button class="hub-core" id="hubToggle" onclick="toggleRadialHub()">
-                <i data-lucide="hexagon" id="coreIcon"></i>
-            </button>
-        </div>
-    </nav>
+        <button class="dock-toggle" id="dockToggle" onclick="toggleDock()" aria-label="Mostrar ou ocultar barra de tarefas"></button>
+    </div>
 
     <script>
         lucide.createIcons();
 
-        const hubContainer = document.getElementById('hubContainer');
-        const telemetry = document.getElementById('telemetry');
-        const coreIcon = document.getElementById('coreIcon');
-        const items = document.querySelectorAll('.hub-item');
+        function abrir(pagina, elemento) {
+            document.querySelectorAll('.dock-item').forEach(btn => btn.classList.remove('active'));
+            if(elemento) elemento.classList.add('active');
 
-        // Toggle para abrir/fechar a órbita radial
-        function toggleRadialHub() {
-            const isActive = hubContainer.classList.toggle('active');
-            
-            // Feedback do Display Central
-            if (isActive) {
-                telemetry.innerText = "SELECIONE O MÓDULO";
-                coreIcon.setAttribute('data-lucide', 'x');
-            } else {
-                telemetry.innerText = "SISTEMA ONLINE";
-                coreIcon.setAttribute('data-lucide', 'hexagon');
-            }
-            
-            lucide.createIcons({ nameAttr: 'data-lucide' });
+            const frame = document.getElementById("frame");
+            frame.src = pagina;
         }
 
-        // Lógica de injeção de dados no display contextual (Hover)
-        items.forEach(item => {
-            item.addEventListener('mouseenter', () => {
-                if(hubContainer.classList.contains('active')){
-                    telemetry.innerText = item.getAttribute('data-label');
-                }
-            });
-
-            item.addEventListener('mouseleave', () => {
-                if(hubContainer.classList.contains('active')){
-                    // Quando tira o mouse, mostra o nome da aba atualmente ativa
-                    const currentActive = document.querySelector('.hub-item.active');
-                    telemetry.innerText = currentActive ? `EM USO: ${currentActive.getAttribute('data-label')}` : "SELECIONE O MÓDULO";
-                }
-            });
-        });
-
-        // Navegação e fechamento automático
-        function abrir(pagina, elemento) {
-            if (elemento.classList.contains('active')) {
-                toggleRadialHub(); // Se clicar no que já está aberto, apenas recolhe o menu
-                return;
-            }
-
-            items.forEach(btn => btn.classList.remove('active'));
-            elemento.classList.add('active');
-
-            // Troca a página
-            requestAnimationFrame(() => {
-                document.getElementById("frame").src = pagina;
-            });
-
-            // Fecha o menu radial e atualiza telemetria após a seleção
-            setTimeout(() => {
-                hubContainer.classList.remove('active');
-                coreIcon.setAttribute('data-lucide', 'hexagon');
-                lucide.createIcons();
-                telemetry.innerText = `SISTEMA ONLINE`;
-            }, 300); // Pequeno atraso para o usuário ver o clique
+        function toggleDock() {
+            const wrapper = document.getElementById('dockWrapper');
+            wrapper.classList.toggle('hidden');
         }
     </script>
 </body>
