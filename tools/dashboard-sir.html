@@ -13,7 +13,7 @@
     --text-main: #ffffff;
     --text-muted: #a0aab5;
     
-    /* Cores Originais Sólidas (Padrão PowerBI / Imagem Referência) */
+    /* Cores Originais Sólidas */
     --color-green: #2e7d32;
     --color-yellow: #d49800;
     --color-red: #c62828;
@@ -41,9 +41,16 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     position: sticky; top: 0; z-index: 100;
   }
-  .header-left { font-size: 15px; font-weight: 700; letter-spacing: 1px; color: #fff; }
+  .header-left { display: flex; align-items: center; gap: 24px; font-size: 15px; font-weight: 700; letter-spacing: 1px; color: #fff; }
   .header-right { display: flex; gap: 20px; font-size: 12px; font-weight: 500; font-family: var(--font-mono); color: var(--text-muted); align-items: center; }
   
+  .btn-settings {
+    background: transparent; border: 1px solid #555; color: #ccc; padding: 6px 12px;
+    font-family: var(--font-sans); font-size: 11px; font-weight: 600; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s; border-radius: 2px; letter-spacing: 0.5px;
+  }
+  .btn-settings:hover { background: #fff; color: #000; border-color: #fff; }
+
   .pulse-dot { width: 10px; height: 10px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
 
@@ -65,6 +72,7 @@
 
   .grand-total-section { margin-bottom: 32px; }
   .region-row { display: flex; gap: 12px; margin-bottom: 20px; align-items: stretch; }
+  .my-areas-row { border-bottom: 1px dashed #333; padding-bottom: 24px; margin-bottom: 32px; }
   
   .region-total-col { flex: 0 0 160px; display: flex; flex-direction: column; }
   .cfs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; flex: 1; align-content: start; }
@@ -77,7 +85,7 @@
   }
   .icon-ext { font-size: 10px; margin-left: 4px; opacity: 0.8; }
 
-  /* CARDS SÓLIDOS (Design Original) */
+  /* CARDS SÓLIDOS */
   .card {
     display: flex; align-items: center; justify-content: center;
     color: #fff; border-radius: 2px;
@@ -90,17 +98,15 @@
   .region-card { height: 100%; min-height: 110px; font-size: 72px; width: 100%; cursor: pointer; transition: filter 0.2s, transform 0.1s; }
   .cf-card { height: 70px; width: 100%; font-size: 38px; cursor: pointer; transition: filter 0.2s, transform 0.1s; }
   
-  /* Interações Padrão */
   button.card { touch-action: manipulation; will-change: transform, filter; }
   button.card:hover { filter: brightness(1.15); }
   button.card:active { transform: scale(0.96); }
 
-  /* CORES SÓLIDAS */
   .bg-green { background-color: var(--color-green); }
   .bg-yellow { background-color: var(--color-yellow); }
   .bg-red { background-color: var(--color-red); }
 
-  /* MODAL */
+  /* MODAIS (Estética Minimalista P&B para Configs) */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
   .modal-overlay.active { opacity: 1; visibility: visible; }
   
@@ -124,7 +130,7 @@
   .copy-btn:hover { background: #fff; color: #000; }
   .copy-btn:active { transform: scale(0.95); }
   
-  .modal-close-btn { background: transparent; border: none; color: #888; font-size: 28px; cursor: pointer; transition: color 0.2s; }
+  .modal-close-btn { background: transparent; border: none; color: #888; font-size: 28px; cursor: pointer; transition: color 0.2s; line-height: 1; }
   .modal-close-btn:hover { color: #fff; }
   
   .modal-body { padding: 16px; overflow-y: auto; }
@@ -134,14 +140,32 @@
   .data-table tr:hover td { background: #22272e; }
   .empty-state { text-align: center; padding: 40px; color: #777; font-size: 14px; font-family: var(--font-sans); }
   
-  /* Tag do CF na tabela */
   .cf-tag { background: #333; padding: 2px 6px; border-radius: 2px; font-weight: bold; color: #fff; }
+
+  /* Estilos Modal Configurações */
+  .cf-checkbox-label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-family: var(--font-mono); cursor: pointer;
+    padding: 10px; border: 1px solid #333; border-radius: 2px; transition: background 0.2s; color: #ccc;
+  }
+  .cf-checkbox-label:hover { background: #22272e; color: #fff; }
+  .cf-checkbox { accent-color: #fff; width: 16px; height: 16px; cursor: pointer; }
+  
+  .btn-save-settings {
+    margin-top: 24px; width: 100%; padding: 14px; background: #fff; color: #000; 
+    font-family: var(--font-sans); font-weight: 700; font-size: 13px; cursor: pointer; 
+    border: none; border-radius: 2px; text-transform: uppercase; transition: transform 0.1s;
+  }
+  .btn-save-settings:active { transform: scale(0.98); }
+
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-left">SIR DASHBOARD - COP REDE FIBRA ES/RJ</div>
+  <div class="header-left">
+    <span>SIR DASHBOARD - COP REDE FIBRA ES/RJ</span>
+    <button class="btn-settings" onclick="openSettings()">Minhas Áreas</button>
+  </div>
   <div class="header-right">
     <div id="countdown">Sincronizando...</div>
     <div id="last-update">--:--:--</div>
@@ -150,7 +174,7 @@
 </header>
 
 <main id="main-grid">
-  </main>
+</main>
 
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
   <div class="modal-content" onclick="event.stopPropagation()">
@@ -177,6 +201,19 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="settings-modal" onclick="closeSettings()">
+  <div class="modal-content" style="max-width: 500px;" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Selecionar Minhas Áreas</div>
+      <button class="modal-close-btn" onclick="closeSettings()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="settings-cf-list" style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
+      <button class="btn-save-settings" onclick="saveSettings()">Salvar Preferências</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const URLS = { ral: 'https://raw.githubusercontent.com/cpralonrj-pralon/embratel-sir/refs/heads/main/dados_ral.csv', rec: 'https://raw.githubusercontent.com/cpralonrj-pralon/embratel-sir/refs/heads/main/dados_rec.csv' };
 const INTERVAL = 300000;
@@ -188,7 +225,9 @@ const REGIONS = {
   'RIO B': { 'NO1': ['RT/RJO /NO1/NET/FO', 'RC/RJO /NO1/NET/FO'], 'NO2': ['RT/RJO /NO2/NET/FO', 'RC/RJO /NO2/NET/FO'], 'BX1': ['RT/RJO /BX1/NET/FO', 'RC/RJO /BX1/NET/FO'], 'MTP': ['RT/RJO /MTP/NET/FO', 'RC/RJO /MTP/NET/FO'], 'NO3': ['RT/RJO /NO3/PCS/FO', 'RC/RJO /NO3/NET/FO'] }
 };
 
-// Mapa Reverso para saber o CF de cada Ticket (Essencial para a view de Região)
+// Gerenciamento de Áreas do Usuário
+let userSavedAreas = JSON.parse(localStorage.getItem('sir_minhas_areas')) || [];
+
 const patternToCF = {};
 for (const [regionName, cfs] of Object.entries(REGIONS)) {
     for (const [cfKey, patterns] of Object.entries(cfs)) {
@@ -248,7 +287,6 @@ function parseWithSep(lines, headerIdx, cfIdx, sep, isRal, headersArray) {
         if (isRal && tipoRalIdx > -1 && cells[tipoRalIdx]) extra = cells[tipoRalIdx];
         else if (!isRal && clienteIdx > -1 && cells[clienteIdx]) extra = cells[clienteIdx];
         
-        // Passando a chave do CF real para o Modal saber
         details[p].push({ ticket, designacao, extra, cfOrigem: patternToCF[p] });
       }
     }
@@ -260,11 +298,11 @@ function buildRegionData(counts, detailsMap, isRal) {
   const result = {}; const typeKey = isRal ? 'ral' : 'rec'; 
   window.modalData[typeKey] = {};
   
-  let allGrandTotalArr = []; // Array que vai segurar TUDO
+  let allGrandTotalArr = []; 
 
   for (const [regionName, cfs] of Object.entries(REGIONS)) {
     const cfData = {}; let regionTotal = 0;
-    let regionDetailsArr = []; // Array que vai segurar TUDO da Região
+    let regionDetailsArr = []; 
 
     for (const [cfKey, patterns] of Object.entries(cfs)) {
       let n = 0; let cfDetailsArr = [];
@@ -275,25 +313,80 @@ function buildRegionData(counts, detailsMap, isRal) {
       cfData[cfKey] = n; 
       regionTotal += n; 
       
-      // Salva nível CF isolado
       window.modalData[typeKey][cfKey] = cfDetailsArr;
-      
-      // Empurra pro array da Região
       regionDetailsArr.push(...cfDetailsArr);
     }
     result[regionName] = { items: cfData, total: regionTotal };
-    
-    // Salva nível Região
     window.modalData[typeKey][regionName] = regionDetailsArr;
-    
-    // Empurra pro array Global
     allGrandTotalArr.push(...regionDetailsArr);
   }
   
-  // Salva nível Global
   window.modalData[typeKey]['ALL'] = allGrandTotalArr;
-  
   return result;
+}
+
+function getFlatCFData(regionData) {
+  const flat = {};
+  for(const reg in regionData) {
+      for(const cf in regionData[reg].items) {
+          flat[cf] = regionData[reg].items[cf];
+      }
+  }
+  return flat;
+}
+
+function generateMyAreasHTML(title, regionData, isRal) {
+  if (!userSavedAreas || userSavedAreas.length === 0) return '';
+  
+  const flatData = getFlatCFData(regionData);
+  const typeKey = isRal ? 'ral' : 'rec';
+  const myAreasKey = `MY_AREAS_${title}`;
+  
+  // Agrega dados para o modal
+  window.modalData[typeKey][myAreasKey] = [];
+  
+  let total = 0;
+  let cfCards = '';
+  
+  userSavedAreas.forEach(cf => {
+      const val = flatData[cf] || 0;
+      total += val;
+      
+      if (window.modalData[typeKey][cf]) {
+          window.modalData[typeKey][myAreasKey].push(...window.modalData[typeKey][cf]);
+      }
+      
+      let volClass = 'bg-green';
+      if (val > 9) volClass = 'bg-red';
+      else if (val > 5) volClass = 'bg-yellow';
+
+      cfCards += `
+      <div class="cf-col">
+        <div class="label-top">${cf} <span class="icon-ext">↗</span></div>
+        <button class="card cf-card ${volClass}" onclick="openModal('${cf}', ${isRal}, '${title} :: ${cf}')">
+          <span class="animate-num" data-val="${val}">0</span>
+        </button>
+      </div>
+      `;
+  });
+  
+  let rtClass = 'bg-green';
+  if (total > 49) rtClass = 'bg-red';
+  else if (total > 29) rtClass = 'bg-yellow';
+
+  return `
+    <div class="region-row my-areas-row">
+      <div class="region-total-col">
+        <div class="label-top" style="color: #fff;">MINHAS ÁREAS <span class="icon-ext">↗</span></div>
+        <button class="card region-card ${rtClass}" onclick="openModal('${myAreasKey}', ${isRal}, 'MINHAS ÁREAS ${title}')">
+          <span class="animate-num" data-val="${total}">0</span>
+        </button>
+      </div>
+      <div class="cfs-grid">
+        ${cfCards}
+      </div>
+    </div>
+  `;
 }
 
 function generateColumnHTML(title, regionData, totalRecords, isRal) {
@@ -311,6 +404,9 @@ function generateColumnHTML(title, regionData, totalRecords, isRal) {
         </button>
       </div>
   `;
+
+  // Insere a seção das Minhas Áreas logo abaixo do Grand Total
+  html += generateMyAreasHTML(title, regionData, isRal);
 
   for (const [regionName, data] of Object.entries(regionData)) {
     let rtClass = 'bg-green';
@@ -348,7 +444,6 @@ function generateColumnHTML(title, regionData, totalRecords, isRal) {
   return html;
 }
 
-// titleOverride permite títulos customizados bonitos (ex: "TOTAL RAL RIO B")
 function openModal(dataKey, isRal, titleOverride) {
   const typeKey = isRal ? 'ral' : 'rec'; 
   const dataArr = window.modalData[typeKey][dataKey] || [];
@@ -388,7 +483,40 @@ function copyDesignations() {
 }
 
 function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+document.addEventListener('keydown', (e) => { 
+    if (e.key === 'Escape') { closeModal(); closeSettings(); }
+});
+
+// Logica Configurações
+function openSettings() {
+  const container = document.getElementById('settings-cf-list');
+  let html = '';
+  for(const reg in REGIONS) {
+      html += `<div style="grid-column: 1 / -1; margin-top: 12px; font-size: 11px; font-weight: bold; color: #666; border-bottom: 1px solid #333; padding-bottom: 4px; text-transform: uppercase;">${reg}</div>`;
+      for(const cf in REGIONS[reg]) {
+          const checked = userSavedAreas.includes(cf) ? 'checked' : '';
+          html += `
+          <label class="cf-checkbox-label">
+              <input type="checkbox" class="cf-checkbox" value="${cf}" ${checked}>
+              ${cf}
+          </label>`;
+      }
+  }
+  container.innerHTML = html;
+  document.getElementById('settings-modal').classList.add('active');
+}
+
+function saveSettings() {
+  const checkboxes = document.querySelectorAll('.cf-checkbox:checked');
+  userSavedAreas = Array.from(checkboxes).map(cb => cb.value);
+  localStorage.setItem('sir_minhas_areas', JSON.stringify(userSavedAreas));
+  closeSettings();
+  
+  // Força uma recarga visual baseada nos dados cacheados (reaproveitando o fluxo loadAll)
+  isFirstLoad = true;
+  loadAll(); 
+}
 
 async function loadAll() {
   document.getElementById('status-dot').style.background = '#d49800'; 
