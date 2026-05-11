@@ -256,7 +256,7 @@
         <div class="support-text">Cop Rede</div>
         <h1>GERENCIADOR DE TORPEDOS</h1>
     </div>
-    <button class="btn-new" onclick="criarTorpedo()">+ Novo Registro</button>
+    <button class="btn-new" onclick="criarTorpedo()">+ Novo Evento</button>
     <div class="torpedo-list" id="listaTorpedosHTML"></div>
 </aside>
 
@@ -267,8 +267,8 @@
         <div class="top-actions">
             <div id="activeTimerDisplay">--:--</div>
             <div>
-                <button class="btn-action btn-copy" onclick="copiarEAtualizar(event)">Copiar e Renovar 1H</button>
-                <button id="btnFinish" class="btn-action btn-close" onclick="encerrarTorpedo(event)">Finalizar Torpedo</button>
+                <button class="btn-action btn-copy" onclick="copiarEAtualizar(event)">COPIAR</button>
+                <button id="btnFinish" class="btn-action btn-close" onclick="encerrarTorpedo(event)">EXCLUIR</button>
             </div>
         </div>
 
@@ -425,8 +425,8 @@
     });
 
     async function criarTorpedo() {
-        const nomeSugerido = `Torpedo ${contadorTorpedos.toString().padStart(3, '0')}`;
-        let novoNome = await abrirPromptCustomizado("Dê um nome para o novo torpedo:", nomeSugerido);
+        const nomeSugerido = `Evento ${contadorTorpedos.toString().padStart(3, '0')}`;
+        let novoNome = await abrirPromptCustomizado("Dê um nome para o novo evento:", nomeSugerido);
         
         if (novoNome === null) return; 
         if (novoNome.trim() === "") novoNome = nomeSugerido;
@@ -451,7 +451,7 @@
         const torpedo = torpedos.find(t => t.id === id);
         if(!torpedo) return;
         
-        const novoNome = await abrirPromptCustomizado("Editar designação do torpedo:", torpedo.nome);
+        const novoNome = await abrirPromptCustomizado("Nome do Evento:", torpedo.nome);
         
         if(novoNome !== null && novoNome.trim() !== "") {
             torpedo.nome = novoNome.trim().toUpperCase();
