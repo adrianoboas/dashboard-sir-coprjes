@@ -2,26 +2,34 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Máscaras Automáticas - Premium B&W (One-Click)</title>
+    <title>Máscaras Automáticas - Raycast Edition</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #050505;
-            --glass-bg: rgba(15, 15, 15, 0.6);
-            --border-color: #222222;
-            --text-pure: #FFFFFF;
-            --text-muted: #888888;
-            --bezier: cubic-bezier(0.25, 1, 0.5, 1);
+            /* Raycast Dark Mode Variables */
+            --bg-app: #0D0D0D;
+            --bg-surface: rgba(255, 255, 255, 0.04);
+            --bg-surface-hover: rgba(255, 255, 255, 0.08);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(255, 255, 255, 0.2);
+            --text-main: #EEEEEE;
+            --text-secondary: #888888;
+            --accent-red: #FF6B6B;
+            
+            /* Geometry */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            
+            /* Animation */
+            --transition-smooth: all 0.2s ease;
         }
 
         body {
             margin: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-deep);
-            background-image: radial-gradient(circle at center, #1a1a1a 1px, transparent 1px);
-            background-size: 24px 24px;
-            color: var(--text-pure);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
             padding: 2vh 4vw;
             height: 100vh;
             box-sizing: border-box;
@@ -32,20 +40,26 @@
         }
 
         h1, h2 {
-            font-weight: 800;
+            font-weight: 600;
             margin: 0;
-            text-transform: uppercase;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
         }
 
         .header-title {
-            font-size: 1.5rem;
-            margin-bottom: 2vh;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 24px;
             display: flex;
             align-items: center;
-            gap: 15px;
-            color: var(--text-pure);
+            gap: 12px;
+            color: var(--text-main);
             flex-shrink: 0;
+            width: 100%;
+            max-width: 1300px;
+        }
+
+        .header-title i {
+            color: var(--text-secondary);
         }
 
         .grid-layout {
@@ -54,9 +68,9 @@
             display: grid;
             grid-template-columns: 1fr 1.5fr;
             grid-template-rows: min-content 1fr;
-            gap: 20px;
+            gap: 24px;
             flex-grow: 1;
-            height: calc(100% - 60px);
+            height: calc(100% - 70px);
         }
 
         .card-operador { grid-column: 1; grid-row: 1; }
@@ -69,184 +83,204 @@
         }
 
         .card { 
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 16px; 
-            padding: 25px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
-            transition: all 0.5s var(--bezier);
+            background: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg); 
+            padding: 24px; 
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+            transition: var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
         }
 
         .card.inactive-blur {
-            opacity: 0.2;
-            filter: blur(4px);
+            opacity: 0.5;
+            filter: blur(2px);
             pointer-events: none;
+            transform: scale(0.99);
         }
 
         .card h2 {
-            font-size: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-main);
             margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
-        .input-group { margin-bottom: 15px; width: 100%; }
+        .card h2 i {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .input-group { margin-bottom: 16px; width: 100%; }
         
         .input-group label { 
             display: block; 
-            font-size: 0.65rem; 
-            color: var(--text-muted); 
-            font-weight: 300; 
+            font-size: 0.75rem; 
+            color: var(--text-secondary); 
+            font-weight: 500; 
             margin-bottom: 8px; 
-            text-transform: uppercase; 
-            letter-spacing: 2px; 
         }
         
         input[type="text"], textarea {
             width: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid var(--border-color);
-            color: var(--text-pure);
-            border-radius: 8px;
-            padding: 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
             font-family: 'Inter', sans-serif;
-            font-weight: 300;
+            font-weight: 400;
             font-size: 0.9rem;
             box-sizing: border-box;
-            transition: all 0.3s var(--bezier);
+            transition: var(--transition-smooth);
         }
         
         input[type="text"]:focus, textarea:focus { 
             outline: none; 
-            border-color: var(--text-pure); 
-            box-shadow: 0 0 0 1px var(--text-pure);
+            border-color: var(--border-focus); 
+            background: rgba(255, 255, 255, 0.02);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
         }
 
-        textarea { height: 70px; resize: none; }
+        textarea { height: 80px; resize: none; line-height: 1.4; }
 
-        .user-input-box { text-transform: uppercase; font-weight: 800 !important; }
+        .user-input-box { text-transform: uppercase; font-weight: 500 !important; }
 
         .preview-display {
-            background: #000;
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: 300;
-            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-subtle);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+            color: var(--text-main);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 15px;
+            gap: 16px;
             word-break: break-all;
         }
 
-        /* Chips Container Otimizado */
         .chips-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 25px;
+            gap: 8px;
+            margin-bottom: 24px;
             flex-grow: 1;
             align-content: flex-start;
             overflow-y: auto;
-            padding-right: 5px;
+            padding-right: 4px;
         }
 
         .chip {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
             display: inline-flex;
-            align-items: center;
-            font-size: 0.75rem;
-            font-weight: 300;
-            transition: all 0.3s var(--bezier);
+            align-items: stretch;
+            font-size: 0.8rem;
+            font-weight: 400;
+            transition: var(--transition-smooth);
             user-select: none;
             height: fit-content;
             overflow: hidden;
         }
 
         .chip-text {
-            padding: 8px 10px 8px 14px;
-            color: var(--text-muted);
+            padding: 8px 12px;
+            color: var(--text-main);
             cursor: pointer;
-            transition: color 0.3s;
+            transition: var(--transition-smooth);
         }
 
         .chip-delete {
-            padding: 8px 12px 8px 6px;
-            color: var(--border-color);
+            padding: 8px 10px;
+            color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition-smooth);
             display: flex;
             align-items: center;
             justify-content: center;
+            border-left: 1px solid transparent;
         }
 
         .chip:hover {
-            border-color: var(--text-pure);
-            transform: translateY(-2px);
+            background: var(--bg-surface-hover);
+            border-color: var(--border-focus);
         }
 
-        .chip:hover .chip-text { color: var(--text-pure); }
+        .chip:hover .chip-delete {
+            border-left-color: var(--border-subtle);
+        }
         
         .chip-delete:hover { 
-            color: #ff3333 !important; /* Única exceção de cor por ser ação destrutiva (opcional, pode deixar text-pure) */
-            transform: scale(1.2);
+            color: var(--accent-red) !important; 
+            background: rgba(255, 107, 107, 0.1);
         }
 
         .chip.active {
-            background: var(--text-pure);
-            border-color: var(--text-pure);
+            background: var(--text-main);
+            border-color: var(--text-main);
         }
 
         .chip.active .chip-text, .chip.active .chip-delete {
-            color: #000;
-            font-weight: 800;
+            color: var(--bg-app);
+            font-weight: 500;
         }
 
         .btn {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-pure);
-            padding: 12px 20px;
-            border-radius: 12px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
             font-family: 'Inter', sans-serif;
-            font-weight: 800;
-            font-size: 0.75rem;
+            font-weight: 500;
+            font-size: 0.85rem;
             cursor: pointer;
-            transition: all 0.3s var(--bezier);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+            transition: var(--transition-smooth);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            gap: 8px;
             flex-shrink: 0;
         }
 
-        .btn:hover { background: var(--border-color); transform: translateY(-2px); }
-        .btn:active { transform: translateY(2px); box-shadow: 0 0px 0px rgba(0,0,0,0); }
+        .btn:hover { 
+            background: var(--bg-surface-hover); 
+            border-color: var(--border-focus);
+        }
+        
+        .btn:active { 
+            transform: scale(0.98); 
+        }
 
-        .btn-action { background: var(--text-pure); color: #000; border-color: var(--text-pure); }
-        .btn-action:hover { background: #e0e0e0; }
+        .btn-action { 
+            background: rgba(255, 255, 255, 0.1); 
+            border-color: var(--border-focus); 
+        }
+        
+        .btn-action:hover { 
+            background: rgba(255, 255, 255, 0.15); 
+        }
 
         .particle {
             position: fixed;
             pointer-events: none;
             width: 4px;
             height: 4px;
-            background: var(--text-pure);
+            background: var(--text-main);
             border-radius: 50%;
             z-index: 9999;
-            animation: explode 0.6s var(--bezier) forwards;
+            animation: explode 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
         @keyframes explode {
@@ -256,48 +290,49 @@
 
         .row-flex {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: flex-end;
             margin-top: auto; 
         }
-        
-        .row-flex .input-group { margin-bottom: 0; flex-grow: 1; }
 
         .history-box { 
-            margin-top: 20px; 
-            padding-top: 15px;
-            border-top: 1px solid var(--border-color);
-            font-size: 0.65rem; 
-            color: var(--text-muted); 
-            font-weight: 300;
-            letter-spacing: 1px;
+            margin-top: 24px; 
+            padding-top: 16px;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 0.75rem; 
+            color: var(--text-secondary); 
+            font-weight: 400;
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+        
         .history-item { 
-            color: var(--text-pure); 
-            margin-top: 6px; 
-            font-weight: 800;
+            color: var(--text-main); 
+            font-family: ui-monospace, monospace;
+            font-size: 0.75rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+        ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
     </style>
 </head>
 <body>
 
 <div class="header-title">
-    <i class="fa-solid fa-mask"></i> Gerador de Máscaras
+    <i class="fa-solid fa-mask"></i> Máscaras
 </div>
 
 <div class="grid-layout" id="mainGrid">
     
     <div class="card card-operador">
-        <h2><i class="fa-solid fa-user-astronaut"></i> Operador & Base</h2>
+        <h2><i class="fa-solid fa-user"></i> Operador & Base</h2>
         
         <div class="input-group">
             <label>Nome do Analista</label>
@@ -308,7 +343,7 @@
             <label>Visualização da Máscara</label>
             <div class="preview-display">
                 <span id="baseMaskPreview">@@ DD/MM HH:MM NOME:</span>
-                <button class="btn btn-action" id="btnCopiarVazia" onclick="copiarVazia(event)" style="padding: 10px; font-size: 0.7rem;">
+                <button class="btn btn-action" id="btnCopiarVazia" onclick="copiarVazia(event)" style="padding: 8px 12px;">
                     <i class="fa-regular fa-copy"></i>
                 </button>
             </div>
@@ -318,19 +353,19 @@
     <div class="card card-mascaras">
         <h2><i class="fa-solid fa-bolt"></i> Máscaras Rápidas</h2>
         
-        <label style="font-size: 0.65rem; color: var(--text-muted); font-weight: 300; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">
-            Clique em um chip para copiar instantaneamente
+        <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 400; margin-bottom: 12px; display: block;">
+            Clique em um item para copiar instantaneamente
         </label>
         
         <div class="chips-container" id="chipContainer">
             </div>
 
         <div class="input-group">
-            <label>Texto Personalizado (Adicionado à Base)</label>
+            <label>Texto Personalizado</label>
             <textarea id="customText" placeholder="Digite o complemento da nota aqui..."></textarea>
         </div>
         
-        <div style="display: flex; gap: 15px;">
+        <div style="display: flex; gap: 12px;">
             <button class="btn btn-action" id="btnCopiarCustom" onclick="copiarCustomizada(event)" style="flex-grow: 1;">
                 <i class="fa-solid fa-paste"></i> Copiar com Texto
             </button>
@@ -340,18 +375,18 @@
         </div>
 
         <div class="history-box">
-            
-  
+            <span>Último copiado:</span>
+            <span class="history-item" id="lastCopied">Nenhum</span>
         </div>
     </div>
 
     <div class="card card-adicionar">
-        <h2><i class="fa-solid fa-database"></i> Nova Variação</h2>
+        <h2><i class="fa-solid fa-plus"></i> Nova Variação</h2>
         <div class="input-group" style="flex-grow: 1;">
             <input type="text" id="newVariation" placeholder="Cole aqui o novo complemento...">
         </div>
         <button class="btn" onclick="adicionarVariacao(event)" style="width: 100%;">
-            <i class="fa-solid fa-plus"></i> Adicionar
+            Adicionar à lista
         </button>
     </div>
 
@@ -441,14 +476,14 @@
             particle.style.top = `${y}px`;
             particle.style.setProperty('--translate-end', `${tx}px, ${ty}px`);
             
-            setTimeout(() => particle.remove(), 600);
+            setTimeout(() => particle.remove(), 500);
         }
     }
 
     function aplicarDesfoqueTemporario() {
         const cards = document.querySelectorAll('.card');
         cards.forEach(card => card.classList.add('inactive-blur'));
-        setTimeout(() => cards.forEach(card => card.classList.remove('inactive-blur')), 300);
+        setTimeout(() => cards.forEach(card => card.classList.remove('inactive-blur')), 200);
     }
 
     function animarElemento(elId, textoOriginal) {
@@ -460,7 +495,8 @@
 
     function executarCopia(textoFinal, elId, event, textoOriginal, intensidadeParticulas, isChip = false) {
         navigator.clipboard.writeText(textoFinal).then(() => {
-            document.getElementById('lastCopied').innerText = textoFinal;
+            const lastCopiedEl = document.getElementById('lastCopied');
+            if(lastCopiedEl) lastCopiedEl.innerText = textoFinal;
             
             const x = event.clientX || event.target.getBoundingClientRect().left;
             const y = event.clientY || event.target.getBoundingClientRect().top;
@@ -507,7 +543,7 @@
     }
 
     function deletarVariacao(index, event) {
-        event.stopPropagation(); // Impede que o clique dispare a cópia
+        event.stopPropagation();
         variacoes.splice(index, 1);
         localStorage.setItem('minhas_variacoes_bw', JSON.stringify(variacoes));
         atualizarChips();
@@ -522,15 +558,13 @@
             chip.className = 'chip';
             chip.title = v;
 
-            const textoExibicao = v.length > 30 ? v.substring(0, 30) + '...' : v;
+            const textoExibicao = v.length > 35 ? v.substring(0, 35) + '...' : v;
 
-            // Área de texto clicável para copiar
             const spanText = document.createElement('span');
             spanText.className = 'chip-text';
             spanText.innerText = textoExibicao;
             spanText.onclick = (e) => copiarDoChip(v, e);
 
-            // Botão de deletar
             const spanDelete = document.createElement('span');
             spanDelete.className = 'chip-delete';
             spanDelete.innerHTML = '<i class="fa-solid fa-xmark"></i>';
