@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Focus | Premium B&W</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Paleta B&W Strict */
+            --bg-deep: #000000;
+            --bg-texture: #050505;
+            --surface: rgba(26, 26, 26, 0.4);
+            --border: #222222;
+            --text-main: #FFFFFF;
+            --text-sec: #888888;
+            
+            /* Animações Premium */
+            --easing: cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Inter', sans-serif; 
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            /* Textura tátil de fundo */
+            background-image: radial-gradient(circle at center, #1a1a1a 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        /* Feedback de Dopamina (Canvas) */
+        #particles-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            height: 600px;
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+        }
+
+        header {
+            padding: 2rem 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: transparent;
+            z-index: 10;
+        }
+
+        /* Alto contraste tipográfico */
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-size: 0.65rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-sec);
+        }
+
+        .stats b { 
+            font-weight: 800; 
+            color: var(--text-main); 
+            font-size: 0.75rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            outline: none;
+            transition: border var(--easing) 0.3s;
+        }
+
+        input[type="text"]:focus { 
+            border-color: var(--text-main); 
+        }
+        
+        input[type="text"]::placeholder {
+            color: var(--text-sec);
+        }
+
+        /* Botão Tátil */
+        button#add-btn {
+            background: var(--text-main);
+            color: var(--bg-deep);
+            border: none;
+            padding: 0 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s var(--easing);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        button#add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        button#add-btn:active {
+            transform: translateY(2px) scale(0.96);
+            box-shadow: 0 2px 5px rgba(255, 255, 255, 0.1);
+        }
+
+        #task-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            list-style: none;
+        }
+
+        #task-list::-webkit-scrollbar { width: 4px; }
+        #task-list::-webkit-scrollbar-track { background: transparent; }
+        #task-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.4s var(--easing);
+            animation: slideIn 0.3s var(--easing) forwards;
+        }
+
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .task-info {
+            flex: 1;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* Hierarquia na tarefa */
+        .task-text { 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+        
+        .task-timer { 
+            font-size: 0.65rem; 
+            color: var(--text-sec); 
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Estado Concluído Premium: Blur e Opacidade */
+        .task-item.completed { 
+            opacity: 0.15; 
+            filter: blur(1.5px);
+            background: transparent;
+            border-color: transparent;
+        }
+        
+        .task-item.completed:hover {
+            opacity: 0.4;
+            filter: blur(0px);
+        }
+
+        .delete-btn {
+            color: var(--text-sec);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            transition: color 0.3s var(--easing);
+        }
+
+        .delete-btn:hover {
+            color: var(--text-main);
+        }
+
+        @media (max-width: 480px) {
+            .container { height: 95vh; border-radius: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+
+<div class="container">
+    <header>
+        <div class="stats">
+            <span>Pendentes <b id="count-pending">0</b></span>
+            <span>Concluídas <b id="count-done">0</b></span>
+        </div>
+        <div class="input-group">
+            <input type="text" id="task-input" placeholder="Comando da nova tarefa..." maxlength="50" autocomplete="off">
+            <button id="add-btn">Add</button>
+        </div>
+    </header>
+
+    <ul id="task-list"></ul>
+</div>
+
+<script>
+    const taskInput = document.getElementById('task-input');
+    const addBtn = document.getElementById('add-btn');
+    const taskList = document.getElementById('task-list');
+    const pendingLabel = document.getElementById('count-pending');
+    const doneLabel = document.getElementById('count-done');
+
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    // --- Sistema de Partículas (Feedback de Dopamina) ---
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let particlesArray = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.size = Math.random() * 2.5 + 1;
+            this.speedX = Math.random() * 6 - 3;
+            this.speedY = Math.random() * 6 - 3;
+            this.life = 1.0;
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            this.life -= 0.02; // Velocidade de fade
+        }
+        draw() {
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.life})`;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function handleParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particlesArray.length; i++) {
+            particlesArray[i].update();
+            particlesArray[i].draw();
+            if (particlesArray[i].life <= 0) {
+                particlesArray.splice(i, 1);
+                i--;
+            }
+        }
+        requestAnimationFrame(handleParticles);
+    }
+    handleParticles();
+
+    function triggerDopamine(x, y) {
+        for (let i = 0; i < 30; i++) {
+            particlesArray.push(new Particle(x, y));
+        }
+    }
+    // ----------------------------------------------------
+
+    function init() {
+        renderTasks();
+        setInterval(updateVisualTimers, 1000);
+        taskInput.focus(); // Input Seamless
+    }
+
+    function save() {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        updateStats();
+    }
+
+    function addTask() {
+        const text = taskInput.value.trim();
+        if (!text) return;
+
+        const task = {
+            id: Date.now(),
+            text,
+            completed: false,
+            createdAt: Date.now(),
+            completedAt: null
+        };
+
+        tasks.push(task);
+        taskInput.value = '';
+        save();
+        renderTasks();
+        
+        setTimeout(() => {
+            taskList.scrollTop = taskList.scrollHeight;
+        }, 50);
+        
+        // Input Seamless: Força o foco de volta para manter o fluxo tátil de digitação
+        taskInput.focus(); 
+    }
+
+    function toggleTask(event, id) {
+        tasks = tasks.map(t => {
+            if (t.id === id) {
+                t.completed = !t.completed;
+                t.completedAt = t.completed ? Date.now() : null;
+                
+                // Dispara feedback tátil na posição do mouse se foi concluída
+                if(t.completed && event) {
+                    triggerDopamine(event.clientX, event.clientY);
+                }
+            }
+            return t;
+        });
+        save();
+        renderTasks();
+    }
+
+    function deleteTask(event, id) {
+        event.stopPropagation(); // Evita que clique na lixeira conclua a tarefa
+        tasks = tasks.filter(t => t.id !== id);
+        save();
+        renderTasks();
+    }
+
+    function formatTime(ms) {
+        const totalSec = Math.floor(ms / 1000);
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        return `${min}m ${sec.toString().padStart(2, '0')}s`;
+    }
+
+    function updateVisualTimers() {
+        tasks.forEach(task => {
+            if (!task.completed) {
+                const el = document.querySelector(`[data-id="${task.id}"] .task-timer`);
+                if (el) el.innerText = formatTime(Date.now() - task.createdAt) + ' decorridos';
+            }
+        });
+    }
+
+    function renderTasks() {
+        const sorted = [...tasks].sort((a, b) => a.completed - b.completed);
+        
+        taskList.innerHTML = sorted.map(t => {
+            const duration = t.completed ? (t.completedAt - t.createdAt) : (Date.now() - t.createdAt);
+            return `
+                <li class="task-item ${t.completed ? 'completed' : ''}" data-id="${t.id}">
+                    <div class="task-info" onclick="toggleTask(event, ${t.id})">
+                        <span class="task-text">${t.text}</span>
+                        <span class="task-timer">${formatTime(duration)} ${t.completed ? 'tempo total' : 'decorridos'}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteTask(event, ${t.id})">DEL</button>
+                </li>
+            `;
+        }).join('');
+        updateStats();
+    }
+
+    function updateStats() {
+        pendingLabel.innerText = tasks.filter(t => !t.completed).length.toString().padStart(2, '0');
+        doneLabel.innerText = tasks.filter(t => t.completed).length.toString().padStart(2, '0');
+    }
+
+    addBtn.addEventListener('click', addTask);
+    taskInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') addTask();
+    });
+
+    init();
+</script>
+
+</body>
+</html>

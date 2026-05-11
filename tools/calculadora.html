@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SLA Matrix | Esert</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #000000;
+            --bg-card: #050505;
+            --accent: #FFFFFF;
+            --border: #1A1A1A;
+            --text-main: #FFFFFF;
+            --text-dim: #888888;
+            --transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* Garantia de Zero Scroll */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        html, body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; /* Trava total de rolagem */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            background-image: radial-gradient(circle, #111 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1000px;
+            height: 90vh; /* Ocupa quase toda a tela vertical */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        header {
+            margin-bottom: 2vh;
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: clamp(1.5rem, 5vh, 2.5rem); /* Tamanho adaptável */
+            letter-spacing: -1px;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 70vh; /* Grid com altura fixa */
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 3vh 30px;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Distribui os itens internamente */
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+        }
+
+        .card h2 {
+            font-weight: 800;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .inputs-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2vh;
+        }
+
+        .input-group {
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-weight: 300;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            color: var(--accent);
+            font-size: 1.2rem;
+            font-weight: 400;
+            padding: 8px 0;
+            transition: var(--transition);
+        }
+
+        input:focus {
+            outline: none;
+            border-bottom-color: var(--accent);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--accent);
+            color: var(--bg-deep);
+            border: none;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: var(--transition);
+            margin: 15px 0;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .result-box {
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+            transition: var(--transition);
+            height: 100px;
+        }
+
+        .result-box.empty {
+            opacity: 0.1;
+            filter: blur(4px);
+        }
+
+        .percent {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .details {
+            font-size: 0.65rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* Responsividade para telas muito pequenas verticalmente */
+        @media (max-height: 600px) {
+            .percent { font-size: 2rem; }
+            .card { padding: 15px; }
+            .calculator-grid { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="container">
+        <header>
+            <h1>SLA</h1>
+        </header>
+
+        <div class="calculator-grid">
+            <section class="card">
+                <h2>01. Esert6h (RALs)</h2>
+                <div class="inputs-container">
+                    <div class="input-group">
+                        <label>Volume Total</label>
+                        <input type="number" id="totalRals" placeholder="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Excedidos (> 6h)</label>
+                        <input type="number" id="fora6h" placeholder="0">
+                    </div>
+                </div>
+                <button onclick="executarCalculo('6h')">Calcular</button>
+                <div class="result-box empty" id="box6h">
+                    <div id="res6h" class="percent">00%</div>
+                    <div id="det6h" class="details">Aguardando...</div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>02. Esert4h (RECs)</h2>
+                <div class="inputs-container">
+                    <div class="input-group">
+                        <label>Volume Total</label>
+                        <input type="number" id="totalRecs" placeholder="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Excedidos (> 4h)</label>
+                        <input type="number" id="fora4h" placeholder="0">
+                    </div>
+                </div>
+                <button onclick="executarCalculo('4h')">Calcular</button>
+                <div class="result-box empty" id="box4h">
+                    <div id="res4h" class="percent">00%</div>
+                    <div id="det4h" class="details">Aguardando...</div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de Partículas
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 8 - 4;
+                this.speedY = Math.random() * -8 - 2;
+                this.opacity = 1;
+            }
+            update() { this.x += this.speedX; this.y += this.speedY; this.opacity -= 0.015; }
+            draw() { ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`; ctx.fillRect(this.x, this.y, this.size, this.size); }
+        }
+
+        function triggerSuccessEffect() {
+            for (let i = 0; i < 50; i++) particles.push(new Particle(window.innerWidth/2, window.innerHeight/2));
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, i) => {
+                p.update(); p.draw();
+                if (p.opacity <= 0) particles.splice(i, 1);
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        function executarCalculo(tipo) {
+            let total, fora, resId, detId, boxId;
+            if (tipo === '6h') {
+                total = document.getElementById('totalRals').value;
+                fora = document.getElementById('fora6h').value;
+                resId = 'res6h'; detId = 'det6h'; boxId = 'box6h';
+            } else {
+                total = document.getElementById('totalRecs').value;
+                fora = document.getElementById('fora4h').value;
+                resId = 'res4h'; detId = 'det4h'; boxId = 'box4h';
+            }
+
+            const nTotal = parseFloat(total);
+            const nFora = parseFloat(fora);
+            const box = document.getElementById(boxId);
+
+            if (isNaN(nTotal) || isNaN(nFora) || nTotal <= 0 || nFora > nTotal) {
+                box.classList.remove('empty');
+                document.getElementById(resId).innerText = "!";
+                document.getElementById(detId).innerText = "Dados inválidos";
+                return;
+            }
+
+            const dentroPrazo = nTotal - nFora;
+            const percentual = Math.round((dentroPrazo / nTotal) * 100);
+
+            box.classList.remove('empty');
+            document.getElementById(resId).innerText = percentual + "%";
+            document.getElementById(detId).innerText = `${dentroPrazo}/${nTotal} OK`;
+
+            if (percentual >= 90) triggerSuccessEffect();
+        }
+
+        // Keyboard-First
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const tipo = input.id.toLowerCase().includes('ral') || input.id.includes('6h') ? '6h' : '4h';
+                    executarCalculo(tipo);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

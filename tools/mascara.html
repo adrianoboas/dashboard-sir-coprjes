@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Máscaras Automáticas - Premium B&W (One-Click)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #050505;
+            --glass-bg: rgba(15, 15, 15, 0.6);
+            --border-color: #222222;
+            --text-pure: #FFFFFF;
+            --text-muted: #888888;
+            --bezier: cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            background-image: radial-gradient(circle at center, #1a1a1a 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: var(--text-pure);
+            padding: 2vh 4vw;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden; 
+        }
+
+        h1, h2 {
+            font-weight: 800;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            margin-bottom: 2vh;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-pure);
+            flex-shrink: 0;
+        }
+
+        .grid-layout {
+            width: 100%;
+            max-width: 1300px;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            grid-template-rows: min-content 1fr;
+            gap: 20px;
+            flex-grow: 1;
+            height: calc(100% - 60px);
+        }
+
+        .card-operador { grid-column: 1; grid-row: 1; }
+        .card-adicionar { grid-column: 1; grid-row: 2; display: flex; flex-direction: column;}
+        .card-mascaras { 
+            grid-column: 2; 
+            grid-row: 1 / span 2; 
+            display: flex; 
+            flex-direction: column;
+        }
+
+        .card { 
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px; 
+            padding: 25px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            transition: all 0.5s var(--bezier);
+        }
+
+        .card.inactive-blur {
+            opacity: 0.2;
+            filter: blur(4px);
+            pointer-events: none;
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .input-group { margin-bottom: 15px; width: 100%; }
+        
+        .input-group label { 
+            display: block; 
+            font-size: 0.65rem; 
+            color: var(--text-muted); 
+            font-weight: 300; 
+            margin-bottom: 8px; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--border-color);
+            color: var(--text-pure);
+            border-radius: 8px;
+            padding: 14px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            transition: all 0.3s var(--bezier);
+        }
+        
+        input[type="text"]:focus, textarea:focus { 
+            outline: none; 
+            border-color: var(--text-pure); 
+            box-shadow: 0 0 0 1px var(--text-pure);
+        }
+
+        textarea { height: 70px; resize: none; }
+
+        .user-input-box { text-transform: uppercase; font-weight: 800 !important; }
+
+        .preview-display {
+            background: #000;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 300;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            word-break: break-all;
+        }
+
+        /* Chips Container Otimizado */
+        .chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-grow: 1;
+            align-content: flex-start;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .chip {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 300;
+            transition: all 0.3s var(--bezier);
+            user-select: none;
+            height: fit-content;
+            overflow: hidden;
+        }
+
+        .chip-text {
+            padding: 8px 10px 8px 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .chip-delete {
+            padding: 8px 12px 8px 6px;
+            color: var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chip:hover {
+            border-color: var(--text-pure);
+            transform: translateY(-2px);
+        }
+
+        .chip:hover .chip-text { color: var(--text-pure); }
+        
+        .chip-delete:hover { 
+            color: #ff3333 !important; /* Única exceção de cor por ser ação destrutiva (opcional, pode deixar text-pure) */
+            transform: scale(1.2);
+        }
+
+        .chip.active {
+            background: var(--text-pure);
+            border-color: var(--text-pure);
+        }
+
+        .chip.active .chip-text, .chip.active .chip-delete {
+            color: #000;
+            font-weight: 800;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-pure);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s var(--bezier);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+        }
+
+        .btn:hover { background: var(--border-color); transform: translateY(-2px); }
+        .btn:active { transform: translateY(2px); box-shadow: 0 0px 0px rgba(0,0,0,0); }
+
+        .btn-action { background: var(--text-pure); color: #000; border-color: var(--text-pure); }
+        .btn-action:hover { background: #e0e0e0; }
+
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            width: 4px;
+            height: 4px;
+            background: var(--text-pure);
+            border-radius: 50%;
+            z-index: 9999;
+            animation: explode 0.6s var(--bezier) forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(1) translate(0, 0); opacity: 1; }
+            100% { transform: scale(0) var(--translate-end); opacity: 0; }
+        }
+
+        .row-flex {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            margin-top: auto; 
+        }
+        
+        .row-flex .input-group { margin-bottom: 0; flex-grow: 1; }
+
+        .history-box { 
+            margin-top: 20px; 
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.65rem; 
+            color: var(--text-muted); 
+            font-weight: 300;
+            letter-spacing: 1px;
+            flex-shrink: 0;
+        }
+        .history-item { 
+            color: var(--text-pure); 
+            margin-top: 6px; 
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+<div class="header-title">
+    <i class="fa-solid fa-mask"></i> Gerador de Máscaras
+</div>
+
+<div class="grid-layout" id="mainGrid">
+    
+    <div class="card card-operador">
+        <h2><i class="fa-solid fa-user-astronaut"></i> Operador & Base</h2>
+        
+        <div class="input-group">
+            <label>Nome do Analista</label>
+            <input type="text" id="userName" class="user-input-box" placeholder="Digite seu nome" oninput="salvarNome(); atualizarPreview()">
+        </div>
+
+        <div class="input-group" style="margin-bottom: 0;">
+            <label>Visualização da Máscara</label>
+            <div class="preview-display">
+                <span id="baseMaskPreview">@@ DD/MM HH:MM NOME:</span>
+                <button class="btn btn-action" id="btnCopiarVazia" onclick="copiarVazia(event)" style="padding: 10px; font-size: 0.7rem;">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-mascaras">
+        <h2><i class="fa-solid fa-bolt"></i> Máscaras Rápidas</h2>
+        
+        <label style="font-size: 0.65rem; color: var(--text-muted); font-weight: 300; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">
+            Clique em um chip para copiar instantaneamente
+        </label>
+        
+        <div class="chips-container" id="chipContainer">
+            </div>
+
+        <div class="input-group">
+            <label>Texto Personalizado (Adicionado à Base)</label>
+            <textarea id="customText" placeholder="Digite o complemento da nota aqui..."></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 15px;">
+            <button class="btn btn-action" id="btnCopiarCustom" onclick="copiarCustomizada(event)" style="flex-grow: 1;">
+                <i class="fa-solid fa-paste"></i> Copiar com Texto
+            </button>
+            <button class="btn" onclick="limparCustom()">
+                <i class="fa-solid fa-eraser"></i> Limpar
+            </button>
+        </div>
+
+        <div class="history-box">
+            
+  
+        </div>
+    </div>
+
+    <div class="card card-adicionar">
+        <h2><i class="fa-solid fa-database"></i> Nova Variação</h2>
+        <div class="input-group" style="flex-grow: 1;">
+            <input type="text" id="newVariation" placeholder="Cole aqui o novo complemento...">
+        </div>
+        <button class="btn" onclick="adicionarVariacao(event)" style="width: 100%;">
+            <i class="fa-solid fa-plus"></i> Adicionar
+        </button>
+    </div>
+
+</div>
+
+<script>
+    const variacoesPadrao = [
+        "EQUIPE DE FIBRA ACIONADA - EM DESLOCAMENTO AO _ PARA REALIZAR TESTES.",
+        "TODAS AS EQUIPES ESTÃO ACIONADAS NO MOMENTO - ATIVIDADE EM FILA, AGUARDANDO DISPONIBILIDADE TECNICA.",
+        "CLIENTE INFORMA QUE EQUIPAMENTO ESTÁ DESLIGADO - FEITO TESTE DE ENERGIA."
+    ];
+
+    let variacoes = JSON.parse(localStorage.getItem('minhas_variacoes_bw')) || variacoesPadrao;
+
+    function init() {
+        const nomeSalvo = localStorage.getItem('usuario_nome_bw');
+        if (nomeSalvo) document.getElementById('userName').value = nomeSalvo;
+
+        atualizarChips();
+        atualizarPreview();
+        
+        setInterval(atualizarPreview, 1000);
+        configurarKeyboardFirst();
+    }
+
+    function configurarKeyboardFirst() {
+        document.getElementById('customText').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                copiarCustomizada({ clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
+            }
+        });
+
+        document.getElementById('newVariation').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                adicionarVariacao({ clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
+            }
+        });
+    }
+
+    function salvarNome() {
+        const nome = document.getElementById('userName').value.toUpperCase();
+        localStorage.setItem('usuario_nome_bw', nome);
+    }
+
+    function obterHorarioArredondado() {
+        const agora = new Date();
+        let minutos = agora.getMinutes();
+        let horas = agora.getHours();
+        
+        let resto = minutos % 5;
+        if (resto !== 0) minutos += (5 - resto);
+        if (minutos >= 60) { minutos = 0; horas += 1; }
+        if (horas >= 24) horas = 0;
+
+        const dia = String(agora.getDate()).padStart(2, '0');
+        const mes = String(agora.getMonth() + 1).padStart(2, '0');
+        const hh = String(horas).padStart(2, '0');
+        const mm = String(minutos).padStart(2, '0');
+
+        return `@@ ${dia}/${mes} ${hh}:${mm}`;
+    }
+
+    function gerarMascaraBase() {
+        const nome = document.getElementById('userName').value.toUpperCase() || "NOME";
+        const tempo = obterHorarioArredondado();
+        return `${tempo} ${nome}:`;
+    }
+
+    function atualizarPreview() {
+        document.getElementById('baseMaskPreview').innerText = gerarMascaraBase();
+    }
+
+    function dispararParticulas(x, y, intensidade = 15) {
+        for (let i = 0; i < intensidade; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            document.body.appendChild(particle);
+            
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = Math.random() * 60 + 20; 
+            const tx = Math.cos(angle) * velocity;
+            const ty = Math.sin(angle) * velocity;
+            
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            particle.style.setProperty('--translate-end', `${tx}px, ${ty}px`);
+            
+            setTimeout(() => particle.remove(), 600);
+        }
+    }
+
+    function aplicarDesfoqueTemporario() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => card.classList.add('inactive-blur'));
+        setTimeout(() => cards.forEach(card => card.classList.remove('inactive-blur')), 300);
+    }
+
+    function animarElemento(elId, textoOriginal) {
+        if (!elId) return;
+        const el = document.getElementById(elId);
+        el.innerHTML = `<i class="fa-solid fa-check"></i>`;
+        setTimeout(() => el.innerHTML = textoOriginal, 1200);
+    }
+
+    function executarCopia(textoFinal, elId, event, textoOriginal, intensidadeParticulas, isChip = false) {
+        navigator.clipboard.writeText(textoFinal).then(() => {
+            document.getElementById('lastCopied').innerText = textoFinal;
+            
+            const x = event.clientX || event.target.getBoundingClientRect().left;
+            const y = event.clientY || event.target.getBoundingClientRect().top;
+            
+            dispararParticulas(x, y, intensidadeParticulas);
+            aplicarDesfoqueTemporario();
+            
+            if (elId) animarElemento(elId, textoOriginal);
+            
+            if (isChip) {
+                const chip = event.target.closest('.chip');
+                chip.classList.add('active');
+                const chipText = chip.querySelector('.chip-text');
+                const oldText = chipText.innerText;
+                chipText.innerHTML = `<i class="fa-solid fa-check"></i> Copiado`;
+                
+                setTimeout(() => {
+                    chip.classList.remove('active');
+                    chipText.innerText = oldText;
+                }, 1000);
+            }
+        });
+    }
+
+    function copiarVazia(event) {
+        const texto = gerarMascaraBase() + " ";
+        executarCopia(texto, 'btnCopiarVazia', event, '<i class="fa-regular fa-copy"></i>', 10);
+    }
+
+    function copiarCustomizada(event) {
+        const custom = document.getElementById('customText').value.trim();
+        const texto = `${gerarMascaraBase()} ${custom}`;
+        executarCopia(texto, 'btnCopiarCustom', event, '<i class="fa-solid fa-paste"></i> Copiar com Texto', 30);
+    }
+
+    function limparCustom() {
+        document.getElementById('customText').value = "";
+        document.getElementById('customText').focus();
+    }
+
+    function copiarDoChip(valor, event) {
+        const texto = `${gerarMascaraBase()} ${valor}`;
+        executarCopia(texto, null, event, null, 20, true);
+    }
+
+    function deletarVariacao(index, event) {
+        event.stopPropagation(); // Impede que o clique dispare a cópia
+        variacoes.splice(index, 1);
+        localStorage.setItem('minhas_variacoes_bw', JSON.stringify(variacoes));
+        atualizarChips();
+    }
+
+    function atualizarChips() {
+        const container = document.getElementById('chipContainer');
+        container.innerHTML = '';
+
+        variacoes.forEach((v, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.title = v;
+
+            const textoExibicao = v.length > 30 ? v.substring(0, 30) + '...' : v;
+
+            // Área de texto clicável para copiar
+            const spanText = document.createElement('span');
+            spanText.className = 'chip-text';
+            spanText.innerText = textoExibicao;
+            spanText.onclick = (e) => copiarDoChip(v, e);
+
+            // Botão de deletar
+            const spanDelete = document.createElement('span');
+            spanDelete.className = 'chip-delete';
+            spanDelete.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            spanDelete.onclick = (e) => deletarVariacao(index, e);
+
+            chip.appendChild(spanText);
+            chip.appendChild(spanDelete);
+            container.appendChild(chip);
+        });
+    }
+
+    function adicionarVariacao(event) {
+        const input = document.getElementById('newVariation');
+        const nova = input.value.trim().toUpperCase();
+        if (nova) {
+            variacoes.push(nova);
+            localStorage.setItem('minhas_variacoes_bw', JSON.stringify(variacoes));
+            input.value = "";
+            atualizarChips();
+            
+            const x = event.clientX || event.target.getBoundingClientRect().left;
+            const y = event.clientY || event.target.getBoundingClientRect().top;
+            dispararParticulas(x, y, 15);
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
