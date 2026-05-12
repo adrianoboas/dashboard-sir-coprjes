@@ -406,41 +406,46 @@ function generateColumnHTML(title, regionData, totalRecords, isRal) {
       </div>
   `;
 
-  // Insere a seção das Minhas Áreas logo abaixo do Grand Total
-  html += generateMyAreasHTML(title, regionData, isRal);
-
-  for (const [regionName, data] of Object.entries(regionData)) {
-    let rtClass = 'bg-green';
-    if (data.total > 49) rtClass = 'bg-red';
-    else if (data.total > 29) rtClass = 'bg-yellow';
-
-    html += `
-      <div class="region-row">
-        <div class="region-total-col">
-          <div class="label-top">TOTAL ${title} ${regionName} <span class="icon-ext">↗</span></div>
-          <button class="card region-card ${rtClass}" onclick="openModal('${regionName}', ${isRal}, 'TOTAL ${title} ${regionName}')">
-            <span class="animate-num" data-val="${data.total}">0</span>
-          </button>
-        </div>
-        <div class="cfs-grid">
-    `;
-
-    for (const [cfKey, val] of Object.entries(data.items)) {
-      let volClass = 'bg-green';
-      if (val > 9) volClass = 'bg-red';
-      else if (val > 5) volClass = 'bg-yellow';
+  // VERIFICAÇÃO INSERIDA AQUI:
+  // Se existirem áreas salvas, renderiza APENAS elas.
+  if (userSavedAreas && userSavedAreas.length > 0) {
+    html += generateMyAreasHTML(title, regionData, isRal);
+  } else {
+    // Caso contrário, renderiza as regiões originais normais
+    for (const [regionName, data] of Object.entries(regionData)) {
+      let rtClass = 'bg-green';
+      if (data.total > 49) rtClass = 'bg-red';
+      else if (data.total > 29) rtClass = 'bg-yellow';
 
       html += `
-        <div class="cf-col">
-          <div class="label-top">${cfKey} <span class="icon-ext">↗</span></div>
-          <button class="card cf-card ${volClass}" onclick="openModal('${cfKey}', ${isRal}, '${title} :: ${cfKey}')">
-            <span class="animate-num" data-val="${val}">0</span>
-          </button>
-        </div>
+        <div class="region-row">
+          <div class="region-total-col">
+            <div class="label-top">TOTAL ${title} ${regionName} <span class="icon-ext">↗</span></div>
+            <button class="card region-card ${rtClass}" onclick="openModal('${regionName}', ${isRal}, 'TOTAL ${title} ${regionName}')">
+              <span class="animate-num" data-val="${data.total}">0</span>
+            </button>
+          </div>
+          <div class="cfs-grid">
       `;
+
+      for (const [cfKey, val] of Object.entries(data.items)) {
+        let volClass = 'bg-green';
+        if (val > 9) volClass = 'bg-red';
+        else if (val > 5) volClass = 'bg-yellow';
+
+        html += `
+          <div class="cf-col">
+            <div class="label-top">${cfKey} <span class="icon-ext">↗</span></div>
+            <button class="card cf-card ${volClass}" onclick="openModal('${cfKey}', ${isRal}, '${title} :: ${cfKey}')">
+              <span class="animate-num" data-val="${val}">0</span>
+            </button>
+          </div>
+        `;
+      }
+      html += `</div></div>`;
     }
-    html += `</div></div>`;
   }
+  
   html += `</div>`;
   return html;
 }
