@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>SIR · Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
+
+  :root {
+    --bg-dark: #0e1117; 
+    --text-main: #ffffff;
+    --text-muted: #a0aab5;
+    
+    /* Cores Originais Sólidas */
+    --color-green: #2e7d32;
+    --color-yellow: #d49800;
+    --color-red: #c62828;
+
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* HEADER */
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 32px; 
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 24px; font-size: 15px; font-weight: 700; letter-spacing: 1px; color: #fff; }
+  .header-right { display: flex; gap: 20px; font-size: 12px; font-weight: 500; font-family: var(--font-mono); color: var(--text-muted); align-items: center; }
+  
+  .btn-settings {
+    background: transparent; border: 1px solid #555; color: #ccc; padding: 6px 12px;
+    font-family: var(--font-sans); font-size: 11px; font-weight: 600; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s; border-radius: 2px; letter-spacing: 0.5px;
+  }
+  .btn-settings:hover { background: #fff; color: #000; border-color: #fff; }
+
+  .pulse-dot { width: 10px; height: 10px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+
+  /* MAIN GRID */
+  main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    padding: 32px;
+    max-width: 1920px;
+    margin: 0 auto;
+  }
+  @media (max-width: 1024px) { main { grid-template-columns: 1fr; } }
+
+  .col-title {
+    font-size: 28px; font-weight: 600; text-align: center; margin-bottom: 24px; 
+    letter-spacing: 1px; color: #fff;
+  }
+
+  .grand-total-section { margin-bottom: 32px; }
+  .region-row { display: flex; gap: 12px; margin-bottom: 20px; align-items: stretch; }
+  .my-areas-row { border-bottom: 1px dashed #333; padding-bottom: 24px; margin-bottom: 32px; }
+  
+  .region-total-col { flex: 0 0 160px; display: flex; flex-direction: column; }
+  .cfs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; flex: 1; align-content: start; }
+  .cf-col { display: flex; flex-direction: column; }
+
+  /* LABELS */
+  .label-top {
+    font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;
+    margin-bottom: 6px; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .icon-ext { font-size: 10px; margin-left: 4px; opacity: 0.8; }
+
+  /* CARDS SÓLIDOS */
+  .card {
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; border-radius: 2px;
+    font-family: var(--font-sans); font-weight: 400; line-height: 1;
+    position: relative; overflow: hidden; border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  
+  .grand-card { height: 70px; font-size: 42px; width: 100%; cursor: pointer; transition: filter 0.2s, transform 0.1s; }
+  .region-card { height: 100%; min-height: 110px; font-size: 72px; width: 100%; cursor: pointer; transition: filter 0.2s, transform 0.1s; }
+  .cf-card { height: 70px; width: 100%; font-size: 38px; cursor: pointer; transition: filter 0.2s, transform 0.1s; }
+  
+  button.card { touch-action: manipulation; will-change: transform, filter; }
+  button.card:hover { filter: brightness(1.15); }
+  button.card:active { transform: scale(0.96); }
+
+  .bg-green { background-color: var(--color-green); }
+  .bg-yellow { background-color: var(--color-yellow); }
+  .bg-red { background-color: var(--color-red); }
+
+  /* MODAIS (Estética Minimalista P&B para Configs) */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
+  .modal-overlay.active { opacity: 1; visibility: visible; }
+  
+  .modal-content { 
+    background: #1a1e23; border: 1px solid #333; 
+    border-radius: 4px; width: 95%; max-width: 900px; max-height: 85vh; display: flex; flex-direction: column; 
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8); 
+    transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+  }
+  .modal-overlay.active .modal-content { transform: scale(1); }
+  
+  .modal-header { padding: 16px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background: #22272e; }
+  .modal-title-group { display: flex; align-items: center; gap: 16px; }
+  .modal-title { font-size: 16px; font-weight: 600; color: #fff; }
+  
+  .copy-btn { 
+    font-family: var(--font-sans); font-size: 11px; font-weight: 600; 
+    background: #374151; border: 1px solid #4b5563; color: #fff; 
+    padding: 6px 12px; border-radius: 2px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; 
+  }
+  .copy-btn:hover { background: #fff; color: #000; }
+  .copy-btn:active { transform: scale(0.95); }
+  
+  .modal-close-btn { background: transparent; border: none; color: #888; font-size: 28px; cursor: pointer; transition: color 0.2s; line-height: 1; }
+  .modal-close-btn:hover { color: #fff; }
+  
+  .modal-body { padding: 16px; overflow-y: auto; }
+  .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; font-family: var(--font-mono); }
+  .data-table th { padding: 10px; color: #aaa; text-transform: uppercase; position: sticky; top: -16px; background: #1a1e23; border-bottom: 1px solid #444; font-family: var(--font-sans); font-weight: 600; z-index: 10;}
+  .data-table td { padding: 12px 10px; color: #eee; border-bottom: 1px solid #2a2a2a; }
+  .data-table tr:hover td { background: #22272e; }
+  .empty-state { text-align: center; padding: 40px; color: #777; font-size: 14px; font-family: var(--font-sans); }
+  
+  .cf-tag { background: #333; padding: 2px 6px; border-radius: 2px; font-weight: bold; color: #fff; }
+
+  /* Estilos Modal Configurações */
+  .cf-checkbox-label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-family: var(--font-mono); cursor: pointer;
+    padding: 10px; border: 1px solid #333; border-radius: 2px; transition: background 0.2s; color: #ccc;
+  }
+  .cf-checkbox-label:hover { background: #22272e; color: #fff; }
+  .cf-checkbox { accent-color: #fff; width: 16px; height: 16px; cursor: pointer; }
+  
+  .btn-save-settings {
+    margin-top: 24px; width: 100%; padding: 14px; background: #fff; color: #000; 
+    font-family: var(--font-sans); font-weight: 700; font-size: 13px; cursor: pointer; 
+    border: none; border-radius: 2px; text-transform: uppercase; transition: transform 0.1s;
+  }
+  .btn-save-settings:active { transform: scale(0.98); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span>SIR DASHBOARD - COP REDE FIBRA ES/RJ</span>
+    <button class="btn-settings" onclick="openSettings()">Minhas Áreas</button>
+  </div>
+  <div class="header-right">
+    <div id="countdown">Sincronizando...</div>
+    <div id="last-update">--:--:--</div>
+    <div class="pulse-dot" id="status-dot"></div>
+  </div>
+</header>
+
+<main id="main-grid">
+</main>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="modal-title" id="modal-title">Detalhes</div>
+        <button id="copy-desig-btn" class="copy-btn" onclick="copyDesignations()" style="display:none;">Copiar Designações</button>
+      </div>
+      <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>CF</th>
+            <th>Ticket</th>
+            <th>Designação</th>
+            <th id="col3-header">Detalhe</th>
+          </tr>
+        </thead>
+        <tbody id="modal-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settings-modal" onclick="closeSettings()">
+  <div class="modal-content" style="max-width: 500px;" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Selecionar Minhas Áreas</div>
+      <button class="modal-close-btn" onclick="closeSettings()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="settings-cf-list" style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
+      <button class="btn-save-settings" onclick="saveSettings()">Salvar Preferências</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const URLS = { ral: 'https://raw.githubusercontent.com/cpralonrj-pralon/embratel-sir/refs/heads/main/dados_ral.csv', rec: 'https://raw.githubusercontent.com/cpralonrj-pralon/embratel-sir/refs/heads/main/dados_rec.csv' };
+const INTERVAL = 300000;
+const CF_COL = 'CF Exec.';
+
+const REGIONS = {
+  'ES': { 'MTN': ['RT/VTA /MTN/FFA/FO'], 'MTS': ['RT/VTA /MTS/FFA/FO'], 'NOR': ['RT/VTA /NOR/FFA/FO'], 'SUL': ['RT/VTA /SUL/FFA/FO'] },
+  'RIO A': { 'SUF': ['RT/RJO /SUF/NET/FO', 'RC/RJO /SUF/NET/FO'], 'SEF': ['RT/RJO /SEF/NET/FO', 'RC/RJO /SEF/NET/FO'], 'NOF': ['RT/RJO /NOF/NET/FO', 'RC/RJO /NOF/NET/FO'], 'LGS': ['RT/RJO /LGS/NET/FO', 'RC/RJO /LGS/NET/FO'], 'CZS': ['RT/RJO /CZS/NET/FO', 'RC/RJO /CZS/NET/FO'], 'SU2': ['RT/RJO /SU2/NET/FO', 'RC/RJO /SU2/NET/FO'], 'OE1': ['RT/RJO /OE1/NET/FO', 'RC/RJO /OE1/NET/FO'] },
+  'RIO B': { 'NO1': ['RT/RJO /NO1/NET/FO', 'RC/RJO /NO1/NET/FO'], 'NO2': ['RT/RJO /NO2/NET/FO', 'RC/RJO /NO2/NET/FO'], 'BX1': ['RT/RJO /BX1/NET/FO', 'RC/RJO /BX1/NET/FO'], 'MTP': ['RT/RJO /MTP/NET/FO', 'RC/RJO /MTP/NET/FO'], 'NO3': ['RT/RJO /NO3/PCS/FO', 'RC/RJO /NO3/NET/FO'] }
+};
+
+// Gerenciamento de Áreas do Usuário
+let userSavedAreas = JSON.parse(localStorage.getItem('sir_minhas_areas')) || [];
+
+const patternToCF = {};
+for (const [regionName, cfs] of Object.entries(REGIONS)) {
+    for (const [cfKey, patterns] of Object.entries(cfs)) {
+        for (const p of patterns) patternToCF[p] = cfKey;
+    }
+}
+
+let countdownVal = INTERVAL / 1000; let countdownTimer = null;
+let isFirstLoad = true; 
+window.modalData = { ral: {}, rec: {} }; window.currentDesignationsToCopy = "";
+
+const normalizeStr = s => s.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+function animateValue(element, start, end, duration) {
+  let startTimestamp = null;
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    const easeOut = 1 - Math.pow(1 - progress, 4);
+    element.innerHTML = Math.floor(easeOut * (end - start) + start);
+    if (progress < 1) window.requestAnimationFrame(step);
+    else element.innerHTML = end;
+  };
+  window.requestAnimationFrame(step);
+}
+
+function parseRaw(text, isRal) {
+  const lines = text.split('\n'); if (lines.length < 2) return { counts: {}, details: {}, total: 0 };
+  let headerLine = ''; let headerIdx = 0;
+  for (let i = 0; i < lines.length; i++) { const t = lines[i].trim(); if (t.length > 0) { headerLine = t; headerIdx = i; break; } }
+  const cleanCell = s => s.replace(/^["'\s]+|["'\s]+$/g, '').trim();
+  const checkHeaders = (sep) => { const hArray = headerLine.split(sep).map(cleanCell); const idx = hArray.findIndex(h => h.toLowerCase() === CF_COL.toLowerCase()); return idx !== -1 ? { sep, idx, hArray } : null; }
+  const validSep = checkHeaders(',') || checkHeaders(';'); if (!validSep) return { counts: {}, details: {}, total: 0 };
+  return parseWithSep(lines, headerIdx, validSep.idx, validSep.sep, isRal, validSep.hArray);
+}
+
+function parseWithSep(lines, headerIdx, cfIdx, sep, isRal, headersArray) {
+  const cleanCell = s => s.replace(/^["'\s]+|["'\s]+$/g, '').trim();
+  const getIdx = (keyword) => headersArray.findIndex(h => normalizeStr(h).includes(keyword));
+  const numRecupIdx = getIdx('NUM.RECUP'); const desigIdx = getIdx('DESIGNACAO'); const tipoRalIdx = getIdx('TIPO RAL'); const clienteIdx = getIdx('CLIENTE');
+  
+  const allMatches = Object.keys(patternToCF);
+  const counts = {}; const details = {}; allMatches.forEach(p => { counts[p] = 0; details[p] = []; });
+  
+  let total = 0;
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    const line = lines[i]; if (!line || line.trim() === '') continue;
+    if (isRal && line.toUpperCase().indexOf('QUALIDADE') !== -1) continue;
+    const cells = line.split(sep).map(cleanCell); if (cells.length <= cfIdx) continue;
+    const cf = cells[cfIdx]; if (!cf) continue;
+    for (const p of allMatches) {
+      if (cf === p) {
+        counts[p]++; total++;
+        const ticket = (numRecupIdx > -1 && cells[numRecupIdx]) ? cells[numRecupIdx] : 'N/D';
+        const designacao = (desigIdx > -1 && cells[desigIdx]) ? cells[desigIdx] : 'N/D';
+        let extra = 'N/D';
+        if (isRal && tipoRalIdx > -1 && cells[tipoRalIdx]) extra = cells[tipoRalIdx];
+        else if (!isRal && clienteIdx > -1 && cells[clienteIdx]) extra = cells[clienteIdx];
+        
+        details[p].push({ ticket, designacao, extra, cfOrigem: patternToCF[p] });
+      }
+    }
+  }
+  return { counts, details, total };
+}
+
+function buildRegionData(counts, detailsMap, isRal) {
+  const result = {}; const typeKey = isRal ? 'ral' : 'rec'; 
+  window.modalData[typeKey] = {};
+  
+  let allGrandTotalArr = []; 
+
+  for (const [regionName, cfs] of Object.entries(REGIONS)) {
+    const cfData = {}; let regionTotal = 0;
+    let regionDetailsArr = []; 
+
+    for (const [cfKey, patterns] of Object.entries(cfs)) {
+      let n = 0; let cfDetailsArr = [];
+      for (const p of patterns) { 
+          n += (counts[p] || 0); 
+          if (detailsMap[p]) cfDetailsArr.push(...detailsMap[p]); 
+      }
+      cfData[cfKey] = n; 
+      regionTotal += n; 
+      
+      window.modalData[typeKey][cfKey] = cfDetailsArr;
+      regionDetailsArr.push(...cfDetailsArr);
+    }
+    result[regionName] = { items: cfData, total: regionTotal };
+    window.modalData[typeKey][regionName] = regionDetailsArr;
+    allGrandTotalArr.push(...regionDetailsArr);
+  }
+  
+  window.modalData[typeKey]['ALL'] = allGrandTotalArr;
+  return result;
+}
+
+function getFlatCFData(regionData) {
+  const flat = {};
+  for(const reg in regionData) {
+      for(const cf in regionData[reg].items) {
+          flat[cf] = regionData[reg].items[cf];
+      }
+  }
+  return flat;
+}
+
+function generateMyAreasHTML(title, regionData, isRal) {
+  if (!userSavedAreas || userSavedAreas.length === 0) return '';
+  
+  const flatData = getFlatCFData(regionData);
+  const typeKey = isRal ? 'ral' : 'rec';
+  const myAreasKey = `MY_AREAS_${title}`;
+  
+  // Agrega dados para o modal
+  window.modalData[typeKey][myAreasKey] = [];
+  
+  let total = 0;
+  let cfCards = '';
+  
+  userSavedAreas.forEach(cf => {
+      const val = flatData[cf] || 0;
+      total += val;
+      
+      if (window.modalData[typeKey][cf]) {
+          window.modalData[typeKey][myAreasKey].push(...window.modalData[typeKey][cf]);
+      }
+      
+      let volClass = 'bg-green';
+      if (val > 9) volClass = 'bg-red';
+      else if (val > 5) volClass = 'bg-yellow';
+
+      cfCards += `
+      <div class="cf-col">
+        <div class="label-top">${cf} <span class="icon-ext">↗</span></div>
+        <button class="card cf-card ${volClass}" onclick="openModal('${cf}', ${isRal}, '${title} :: ${cf}')">
+          <span class="animate-num" data-val="${val}">0</span>
+        </button>
+      </div>
+      `;
+  });
+  
+  let rtClass = 'bg-green';
+  if (total > 49) rtClass = 'bg-red';
+  else if (total > 29) rtClass = 'bg-yellow';
+
+  return `
+    <div class="region-row my-areas-row">
+      <div class="region-total-col">
+        <div class="label-top" style="color: #fff;">MINHAS ÁREAS <span class="icon-ext">↗</span></div>
+        <button class="card region-card ${rtClass}" onclick="openModal('${myAreasKey}', ${isRal}, 'MINHAS ÁREAS ${title}')">
+          <span class="animate-num" data-val="${total}">0</span>
+        </button>
+      </div>
+      <div class="cfs-grid">
+        ${cfCards}
+      </div>
+    </div>
+  `;
+}
+
+function generateColumnHTML(title, regionData, totalRecords, isRal) {
+  let grandVolClass = 'bg-green';
+  if (totalRecords > 49) grandVolClass = 'bg-red';
+  else if (totalRecords > 29) grandVolClass = 'bg-yellow';
+
+  let html = `
+    <div class="dashboard-col">
+      <div class="col-title">${title}</div>
+      <div class="grand-total-section">
+        <div class="label-top">TOTAL ${title} RRE <span class="icon-ext">↗</span></div>
+        <button class="card grand-card ${grandVolClass}" onclick="openModal('ALL', ${isRal}, 'TOTAL ${title} RRE')">
+            <span class="animate-num" data-val="${totalRecords}">0</span>
+        </button>
+      </div>
+  `;
+
+  // Insere a seção das Minhas Áreas logo abaixo do Grand Total
+  html += generateMyAreasHTML(title, regionData, isRal);
+
+  for (const [regionName, data] of Object.entries(regionData)) {
+    let rtClass = 'bg-green';
+    if (data.total > 49) rtClass = 'bg-red';
+    else if (data.total > 29) rtClass = 'bg-yellow';
+
+    html += `
+      <div class="region-row">
+        <div class="region-total-col">
+          <div class="label-top">TOTAL ${title} ${regionName} <span class="icon-ext">↗</span></div>
+          <button class="card region-card ${rtClass}" onclick="openModal('${regionName}', ${isRal}, 'TOTAL ${title} ${regionName}')">
+            <span class="animate-num" data-val="${data.total}">0</span>
+          </button>
+        </div>
+        <div class="cfs-grid">
+    `;
+
+    for (const [cfKey, val] of Object.entries(data.items)) {
+      let volClass = 'bg-green';
+      if (val > 9) volClass = 'bg-red';
+      else if (val > 5) volClass = 'bg-yellow';
+
+      html += `
+        <div class="cf-col">
+          <div class="label-top">${cfKey} <span class="icon-ext">↗</span></div>
+          <button class="card cf-card ${volClass}" onclick="openModal('${cfKey}', ${isRal}, '${title} :: ${cfKey}')">
+            <span class="animate-num" data-val="${val}">0</span>
+          </button>
+        </div>
+      `;
+    }
+    html += `</div></div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function openModal(dataKey, isRal, titleOverride) {
+  const typeKey = isRal ? 'ral' : 'rec'; 
+  const dataArr = window.modalData[typeKey][dataKey] || [];
+  
+  document.getElementById('modal-title').textContent = titleOverride;
+  document.getElementById('col3-header').textContent = isRal ? 'Tipo RAL' : 'Cliente';
+  const copyBtn = document.getElementById('copy-desig-btn');
+  
+  if (!isRal) {
+    const valid = dataArr.map(i => i.designacao).filter(d => d !== 'N/D' && (d.match(/[A-Za-z]/g) || []).length <= 6);
+    if (valid.length > 0) { window.currentDesignationsToCopy = valid.join(" OU "); copyBtn.style.display = "inline-block"; copyBtn.textContent = "Copiar Designações"; } 
+    else { copyBtn.style.display = "none"; window.currentDesignationsToCopy = ""; }
+  } else { copyBtn.style.display = "none"; window.currentDesignationsToCopy = ""; }
+
+  const tbody = document.getElementById('modal-tbody');
+  if (dataArr.length === 0) { 
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">Nenhum ticket mapeado nesta seleção.</div></td></tr>`; 
+  } else { 
+      tbody.innerHTML = dataArr.map(i => `
+        <tr>
+            <td><span class="cf-tag">${i.cfOrigem}</span></td>
+            <td>${i.ticket}</td>
+            <td>${i.designacao}</td>
+            <td>${i.extra}</td>
+        </tr>
+      `).join(''); 
+  }
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function copyDesignations() {
+  if (!window.currentDesignationsToCopy) return;
+  navigator.clipboard.writeText(window.currentDesignationsToCopy).then(() => {
+    const btn = document.getElementById('copy-desig-btn'); btn.textContent = "COPIADO COM SUCESSO!"; btn.style.background = "#10b981"; btn.style.color = "#000";
+    setTimeout(() => { btn.textContent = "Copiar Designações"; btn.style.background = "#374151"; btn.style.color = "#fff"; }, 2000);
+  });
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+document.addEventListener('keydown', (e) => { 
+    if (e.key === 'Escape') { closeModal(); closeSettings(); }
+});
+
+// Logica Configurações
+function openSettings() {
+  const container = document.getElementById('settings-cf-list');
+  let html = '';
+  for(const reg in REGIONS) {
+      html += `<div style="grid-column: 1 / -1; margin-top: 12px; font-size: 11px; font-weight: bold; color: #666; border-bottom: 1px solid #333; padding-bottom: 4px; text-transform: uppercase;">${reg}</div>`;
+      for(const cf in REGIONS[reg]) {
+          const checked = userSavedAreas.includes(cf) ? 'checked' : '';
+          html += `
+          <label class="cf-checkbox-label">
+              <input type="checkbox" class="cf-checkbox" value="${cf}" ${checked}>
+              ${cf}
+          </label>`;
+      }
+  }
+  container.innerHTML = html;
+  document.getElementById('settings-modal').classList.add('active');
+}
+
+function saveSettings() {
+  const checkboxes = document.querySelectorAll('.cf-checkbox:checked');
+  userSavedAreas = Array.from(checkboxes).map(cb => cb.value);
+  localStorage.setItem('sir_minhas_areas', JSON.stringify(userSavedAreas));
+  closeSettings();
+  
+  // Força uma recarga visual baseada nos dados cacheados (reaproveitando o fluxo loadAll)
+  isFirstLoad = true;
+  loadAll(); 
+}
+
+async function loadAll() {
+  document.getElementById('status-dot').style.background = '#d49800'; 
+  
+  try {
+    const [ralText, recText] = await Promise.all([
+      fetch(`${URLS.ral}?_=${Date.now()}`, { cache: 'no-store' }).then(r => r.text()),
+      fetch(`${URLS.rec}?_=${Date.now()}`, { cache: 'no-store' }).then(r => r.text())
+    ]);
+
+    const ralRes = parseRaw(ralText, true); const recRes = parseRaw(recText, false);
+    const ralRegions = buildRegionData(ralRes.counts, ralRes.details, true); 
+    const recRegions = buildRegionData(recRes.counts, recRes.details, false);
+
+    const mainGrid = document.getElementById('main-grid');
+    mainGrid.innerHTML = generateColumnHTML('RAL', ralRegions, ralRes.total, true) + 
+                         generateColumnHTML('REC', recRegions, recRes.total, false);
+
+    const numElements = document.querySelectorAll('.animate-num');
+    numElements.forEach(el => {
+        const endVal = parseInt(el.getAttribute('data-val'));
+        if (isFirstLoad) {
+            animateValue(el, 0, endVal, 800);
+        } else {
+            el.innerHTML = endVal;
+        }
+    });
+    isFirstLoad = false;
+
+    document.getElementById('status-dot').style.background = '#2e7d32';
+    document.getElementById('last-update').textContent = `${new Date().toLocaleTimeString('pt-BR')}`;
+    resetCountdown();
+  } catch (err) {
+    document.getElementById('status-dot').style.background = '#c62828'; 
+    document.getElementById('main-grid').innerHTML = `<div style="text-align:center; grid-column: 1 / -1; color:#c62828; font-size:24px; padding-top:40px;">Falha de comunicação: ${err.message}</div>`;
+  }
+}
+
+function resetCountdown() {
+  countdownVal = INTERVAL / 1000; if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    countdownVal--; document.getElementById('countdown').textContent = `Atualiza em ${Math.floor(countdownVal / 60)}:${String(countdownVal % 60).padStart(2,'0')}`;
+    if (countdownVal <= 0) loadAll();
+  }, 1000);
+}
+
+loadAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Central de Scripts - Premium B&W</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #000000;
+            --bg-panel: rgba(15, 15, 15, 0.6);
+            --text-pure: #FFFFFF;
+            --text-muted: #888888;
+            --border-dark: #1A1A1A;
+            --border-light: #333333;
+            --transition-smooth: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            /* Textura discreta de pontos com radial gradient escuro */
+            background-image: 
+                radial-gradient(circle at 50% 0%, #111111 0%, transparent 70%),
+                radial-gradient(#1a1a1a 1px, transparent 1px);
+            background-size: 100% 100%, 24px 24px;
+            color: var(--text-pure);
+            padding: 40px;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        /* Canvas de Partículas para Dopamina */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .header-title {
+            text-align: center;
+            font-weight: 800;
+            font-size: 2.5rem;
+            letter-spacing: -1px;
+            margin-bottom: 40px;
+            color: var(--text-pure);
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        /* Card Glassmorphism Premium */
+        .card { 
+            background: var(--bg-panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-dark);
+            border-radius: 24px; 
+            padding: 30px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        .card h2 {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--text-pure);
+            margin-top: 0;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Formulário de Input Seamless */
+        .input-group { margin-bottom: 20px; }
+        
+        .input-group label { 
+            display: block; 
+            font-size: 0.65rem; 
+            color: var(--text-muted); 
+            font-weight: 300; 
+            margin-bottom: 8px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.15em; 
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            background: #050505;
+            border: 1px solid var(--border-dark);
+            color: var(--text-pure);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            transition: var(--transition-smooth);
+        }
+
+        input[type="text"]:focus, textarea:focus { 
+            outline: none; 
+            border-color: var(--text-muted); 
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+        }
+        
+        textarea { height: 200px; resize: vertical; line-height: 1.6; }
+
+        /* Botões Táteis */
+        .btn-salvar {
+            width: 100%;
+            background: var(--text-pure);
+            color: var(--bg-deep);
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-salvar:hover { 
+            background: #e0e0e0; 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-salvar:active {
+            transform: translateY(2px); /* Efeito tátil de afundar */
+            box-shadow: 0 2px 5px rgba(255, 255, 255, 0.1);
+        }
+
+        .hint {
+            display: block;
+            text-align: center;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 12px;
+            font-weight: 300;
+        }
+
+        /* Grid de Botões (Scripts Salvos) */
+        .scripts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .script-btn-container {
+            background: #050505;
+            border: 1px solid var(--border-dark);
+            border-radius: 16px;
+            display: flex;
+            align-items: stretch;
+            transition: var(--transition-smooth);
+            overflow: hidden;
+        }
+
+        .script-btn-container:hover {
+            border-color: var(--border-light);
+            transform: translateY(-3px); /* Flutua no hover */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .script-copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-pure);
+            padding: 16px;
+            flex-grow: 1;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .script-delete-btn {
+            background: transparent;
+            border: none;
+            border-left: 1px solid var(--border-dark);
+            color: var(--text-muted);
+            padding: 0 18px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .script-delete-btn:hover { 
+            color: var(--text-pure); 
+            background: rgba(255, 255, 255, 0.05); 
+        }
+
+        /* Estado Concluído / Copiado */
+        .copied-anim {
+            opacity: 0.2;
+            filter: blur(2px);
+            transform: scale(0.95);
+        }
+
+        /* Scrollbar Premium */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    </style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<div class="header-title">
+    CENTRAL DE SCRIPTS
+</div>
+
+<div class="grid-layout">
+    <div class="card">
+        <h2>REGISTRAR TEXTO</h2>
+        
+        <div class="input-group">
+            <label>Identificação</label>
+            <input type="text" id="scriptNome" placeholder="Ex: Tratativa RAL" autocomplete="off">
+        </div>
+        
+        <div class="input-group">
+            <label>Conteúdo</label>
+            <textarea id="scriptTexto" placeholder="Digite o script..."></textarea>
+        </div>
+        
+        <button class="btn-salvar" onclick="salvarNovoScript(event)">Salvar</button>
+        <span class="hint">Dica: Use Shift + Enter para salvar rapidamente.</span>
+    </div>
+
+    <div class="card">
+        <h2>REGISTROS SALVOS</h2>
+        <div class="scripts-grid" id="gridScripts">
+            </div>
+    </div>
+</div>
+
+<script>
+    // --- LÓGICA DE UI/UX (Partículas & Atalhos) ---
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function createParticles(x, y, amount) {
+        for (let i = 0; i < amount; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 1,
+                size: Math.random() * 3 + 1
+            });
+        }
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            let p = particles[i];
+            ctx.fillStyle = `rgba(255, 255, 255, ${p.life})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.02; // Fade out speed
+        }
+        particles = particles.filter(p => p.life > 0);
+        requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // Keyboard-First Seamless Input
+    document.getElementById('scriptNome').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('scriptTexto').focus();
+        }
+    });
+
+    document.getElementById('scriptTexto').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.shiftKey) {
+            e.preventDefault();
+            salvarNovoScript(e);
+        }
+    });
+
+    // --- LÓGICA CORE DOS SCRIPTS ---
+    let bancoDeScripts = JSON.parse(localStorage.getItem('minha_central_scripts')) || [];
+
+    function renderizarScripts() {
+        const grid = document.getElementById('gridScripts');
+        grid.innerHTML = "";
+
+        if(bancoDeScripts.length === 0) {
+            grid.innerHTML = "<p style='color: var(--text-muted); font-size: 0.8rem; font-weight: 300;'>Sistema limpo. Aguardando novos registros.</p>";
+            return;
+        }
+
+        bancoDeScripts.forEach((script, index) => {
+            const div = document.createElement('div');
+            div.className = 'script-btn-container';
+            div.id = `script-card-${index}`;
+
+            const btnCopy = document.createElement('button');
+            btnCopy.className = 'script-copy-btn';
+            btnCopy.textContent = script.nome;
+            
+            btnCopy.onclick = (e) => {
+                navigator.clipboard.writeText(script.texto).then(() => {
+                    // Dopamina UX: Partículas no clique
+                    const rect = btnCopy.getBoundingClientRect();
+                    createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, 30);
+                    
+                    // UX de Inatividade: Blur e redução de opacidade
+                    div.classList.add('copied-anim');
+                    btnCopy.textContent = "Copiado";
+                    
+                    setTimeout(() => {
+                        div.classList.remove('copied-anim');
+                        btnCopy.textContent = script.nome;
+                    }, 800);
+                });
+            };
+
+            const btnDelete = document.createElement('button');
+            btnDelete.className = 'script-delete-btn';
+            btnDelete.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            btnDelete.onclick = () => deletarScript(index);
+
+            div.appendChild(btnCopy);
+            div.appendChild(btnDelete);
+            grid.appendChild(div);
+        });
+    }
+
+    function salvarNovoScript(e) {
+        const nomeInput = document.getElementById('scriptNome');
+        const textoInput = document.getElementById('scriptTexto');
+        const nome = nomeInput.value.trim();
+        const texto = textoInput.value.trim();
+
+        if (nome === "" || texto === "") return;
+
+        bancoDeScripts.push({ nome: nome, texto: texto });
+        localStorage.setItem('minha_central_scripts', JSON.stringify(bancoDeScripts));
+
+        // Dopamina UX: Partículas intensas para ação prioritária
+        const rect = e.target ? e.target.getBoundingClientRect() : document.querySelector('.btn-salvar').getBoundingClientRect();
+        createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, 60);
+
+        nomeInput.value = "";
+        textoInput.value = "";
+        nomeInput.focus();
+
+        renderizarScripts();
+    }
+
+    function deletarScript(index) {
+        bancoDeScripts.splice(index, 1);
+        localStorage.setItem('minha_central_scripts', JSON.stringify(bancoDeScripts));
+        renderizarScripts();
+    }
+
+    window.onload = renderizarScripts;
+</script>
+
+</body>
+</html>
