@@ -143,7 +143,7 @@
   
   .cf-tag { background: #333; padding: 2px 6px; border-radius: 2px; font-weight: bold; color: #fff; }
 
-  /* Botão Link na Tabela (Minimalista) */
+  /* Botão Link na Tabela */
   .ticket-link-btn {
     display: inline-block;
     background: #ffffff;
@@ -159,6 +159,7 @@
     white-space: nowrap;
     border: 1px solid #ffffff;
     line-height: 1;
+    cursor: pointer;
   }
   .ticket-link-btn:hover {
     background: transparent;
@@ -249,7 +250,6 @@ const REGIONS = {
   'RIO B': { 'NO1': ['RT/RJO /NO1/NET/FO', 'RC/RJO /NO1/NET/FO'], 'NO2': ['RT/RJO /NO2/NET/FO', 'RC/RJO /NO2/NET/FO'], 'BX1': ['RT/RJO /BX1/NET/FO', 'RC/RJO /BX1/NET/FO'], 'MTP': ['RT/RJO /MTP/NET/FO', 'RC/RJO /MTP/NET/FO'], 'NO3': ['RT/RJO /NO3/PCS/FO', 'RC/RJO /NO3/NET/FO'] }
 };
 
-// Gerenciamento de Áreas do Usuário
 let userSavedAreas = JSON.parse(localStorage.getItem('sir_minhas_areas')) || [];
 
 const patternToCF = {};
@@ -469,27 +469,37 @@ function generateColumnHTML(title, regionData, totalRecords, isRal) {
   return html;
 }
 
-// NOVA FUNÇÃO: Gera a URL de direcionamento extraindo os dados do texto do Ticket
 function generateTicketURL(ticketStr, isRal, designacaoStr) {
     if (!ticketStr || ticketStr === 'N/D') return '#';
     
-    // Extrai o número do ticket e o ano, ignorando se tem "RAL-" ou "REC-" na frente
     const match = ticketStr.match(/(?:RAL|REC)?-?(\d+)\/(\d{4})/i);
     if (!match) return '#';
 
     const numeroStr = match[1];
     const anoStr = match[2];
-    
-    // Realiza o cálculo para o campo recuperação
     const recuperacao = parseInt(numeroStr, 10) + 17267511;
 
     if (isRal) {
         return `http://10.13.54.150:20020/navegacao/framesetNivel2TarefaRal.cfm?iorigem=Consulta&tipo=RAL&num_recup=${numeroStr}&ano_recup=${anoStr}&recuperacao=${recuperacao}&acaoDesc=&flag=999`;
     } else {
-        // Encodificação essencial para designações com espaços e barras funcionarem no URL
         const encodedDesig = encodeURIComponent(designacaoStr || '');
         return `http://10.13.54.150:20020/navegacao/framesetNivel2TarefaRec.cfm?exibe_msg=SIM&iorigem=Consulta&itemAtual=1&tipo=REC&num_recup=${numeroStr}&designacao=${encodedDesig}&ano_recup=${anoStr}&recuperacao=${recuperacao}&acaoDesc=&flag=999`;
     }
+}
+
+// NOVA FUNÇÃO: Abre o link em uma janela flutuante customizada
+function openTicketWindow(url) {
+    const width = 1200;
+    const height = 800;
+    
+    // Calcula o centro da tela
+    const left = (screen.width / 2) - (width / 2);
+    const top = (screen.height / 2) - (height / 2);
+
+    // Parâmetros para forçar o navegador a criar um popup flutuante
+    const features = `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes,status=no,toolbar=no,menubar=no`;
+    
+    window.open(url, 'TicketWindow', features);
 }
 
 function openModal(dataKey, isRal, titleOverride) {
@@ -508,14 +518,14 @@ function openModal(dataKey, isRal, titleOverride) {
 
   const tbody = document.getElementById('modal-tbody');
   if (dataArr.length === 0) { 
-      // Atualizado colspan para 5 para cobrir a nova coluna de Ação
       tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Nenhum ticket mapeado nesta seleção.</div></td></tr>`; 
   } else { 
       tbody.innerHTML = dataArr.map(i => {
-        // Chama o gerador de URL
         const link = generateTicketURL(i.ticket, isRal, i.designacao);
+        
+        // MODIFICADO: Chama a nova função openTicketWindow
         const btnHtml = link !== '#' 
-            ? `<a href="${link}" target="_blank" class="ticket-link-btn">⇗</a>` 
+            ? `<button onclick="openTicketWindow('${link}')" class="ticket-link-btn">↗</button>` 
             : `<span style="color:#555;">N/A</span>`;
 
         return `
@@ -542,11 +552,14 @@ function copyDesignations() {
 
 function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+
 document.addEventListener('keydown', (e) => { 
-    if (e.key === 'Escape') { closeModal(); closeSettings(); }
+    if (e.key === 'Escape') { 
+        closeModal(); 
+        closeSettings(); 
+    }
 });
 
-// Logica Configurações
 function openSettings() {
   const container = document.getElementById('settings-cf-list');
   let html = '';
