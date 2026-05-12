@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEXUS - COP REDE</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="icon" href="https://www.svgrepo.com/show/530661/genetic-data.svg" sizes="any" type="image/svg+xml">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ==========================================================================
+           1. ARQUITETURA DE TOKENS (EXTREME MINIMALISM B&W)
+           ========================================================================== */
+        :root {
+            /* Cores Absolutas */
+            --black-pure: #000000;
+            --black-elevated: #0a0a0a;
+            --white-pure: #ffffff;
+            
+            /* Tons Funcionais */
+            --gray-subtle: #1a1a1a;
+            --gray-border: #222222;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            
+            /* Estrutura */
+            --sidebar-width: 260px;
+            --sidebar-collapsed: 72px;
+            
+            /* Curvas de Motion (Rápidas, secas e eficientes) */
+            --motion-snap: 150ms cubic-bezier(0.2, 0, 0, 1);
+            --motion-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ==========================================================================
+           2. RESET GLOBAL & PERFORMANCE BASE
+           ========================================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100vh;
+            background-color: var(--black-pure);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* ==========================================================================
+           3. ESTRUTURA MACRO (COMMAND CENTER)
+           ========================================================================== */
+        
+        /* A Sidebar Operacional */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--black-elevated);
+            border-right: 1px solid var(--gray-border);
+            display: flex;
+            flex-direction: column;
+            transition: width var(--motion-smooth);
+            position: relative;
+            z-index: 10;
+            isolation: isolate;
+        }
+
+        /* O Container do iFrame */
+        .workspace {
+            flex: 1;
+            height: 100vh;
+            position: relative;
+            background-color: var(--black-pure);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            background-color: transparent;
+            will-change: transform;
+        }
+
+        /* ==========================================================================
+           4. COMPONENTES DA SIDEBAR
+           ========================================================================== */
+        
+        /* Header da Sidebar (Branding) */
+        .sidebar-header {
+            height: 72px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--gray-border);
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--white-pure);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .brand i {
+            color: var(--white-pure);
+            min-width: 20px;
+        }
+
+        /* O botão de colapsar */
+        .collapse-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 4px;
+            transition: color var(--motion-snap), background var(--motion-snap);
+        }
+
+        .collapse-btn:hover {
+            color: var(--white-pure);
+            background: var(--gray-subtle);
+        }
+
+        /* Navegação Principal */
+        .nav-menu {
+            flex: 1;
+            padding: 24px 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* Esconde a scrollbar mas mantém funcionamento */
+        .nav-menu::-webkit-scrollbar { width: 0px; }
+
+        /* Itens de Navegação (Zero arredondamentos excessivos, design utilitário) */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px;
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            text-align: left;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            position: relative;
+            transition: color var(--motion-snap), background-color var(--motion-snap);
+        }
+
+        .nav-item i {
+            min-width: 20px;
+            stroke-width: 2px;
+            transition: transform var(--motion-snap);
+        }
+
+        .nav-label {
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity var(--motion-smooth);
+        }
+
+        /* Microinteração de Hover (Foco no feedback seco) */
+        .nav-item:hover {
+            color: var(--white-pure);
+            background-color: var(--gray-subtle);
+        }
+
+        .nav-item:hover i {
+            transform: scale(1.1);
+        }
+
+        /* Estado Ativo (Inversão B&W de Alto Contraste) */
+        .nav-item.active {
+            background-color: var(--white-pure);
+            color: var(--black-pure);
+            font-weight: 600;
+        }
+
+        .nav-item.active i {
+            stroke-width: 2.5px;
+        }
+
+        /* ==========================================================================
+           5. ESTADO COLAPSADO (ERGONOMIA DE ESPAÇO)
+           ========================================================================== */
+        body.sidebar-collapsed .sidebar {
+            width: var(--sidebar-collapsed);
+        }
+
+        body.sidebar-collapsed .brand span,
+        body.sidebar-collapsed .nav-label {
+            opacity: 0;
+            pointer-events: none;
+            display: none; /* Remoção forçada para evitar overflow visual */
+        }
+
+        body.sidebar-collapsed .sidebar-header {
+            padding: 0;
+            justify-content: center;
+        }
+
+        body.sidebar-collapsed .collapse-btn i {
+            transform: rotate(180deg);
+        }
+
+        body.sidebar-collapsed .nav-item {
+            justify-content: center;
+            padding: 14px 0;
+        }
+
+        body.sidebar-collapsed .nav-item i {
+            margin: 0;
+        }
+
+        /* ==========================================================================
+           6. RESPONSIVIDADE PROFISSIONAL (MOBILE & TABLET)
+           ========================================================================== */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column-reverse;
+            }
+
+            .sidebar {
+                width: 100% !important;
+                height: 70px; /* Vira uma Bottom Bar */
+                border-right: none;
+                border-top: 1px solid var(--gray-border);
+                flex-direction: row;
+            }
+
+            .workspace {
+                height: calc(100vh - 70px);
+            }
+
+            .sidebar-header {
+                display: none; /* Esconde branding no mobile */
+            }
+
+            .nav-menu {
+                flex-direction: row;
+                justify-content: space-around;
+                padding: 0 8px;
+                height: 100%;
+                align-items: center;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+
+            .nav-item {
+                flex-direction: column;
+                gap: 4px;
+                padding: 8px 4px;
+                width: auto;
+                border-radius: 8px;
+            }
+
+            .nav-label {
+                display: block !important;
+                opacity: 1 !important;
+                font-size: 0.6rem;
+                font-weight: 600;
+            }
+            
+            .nav-item.active {
+                background-color: transparent;
+                color: var(--white-pure);
+            }
+            
+            .nav-item.active i {
+                color: var(--white-pure);
+                background-color: var(--gray-subtle);
+                padding: 6px;
+                border-radius: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand">
+                <i data-lucide="hexagon"></i>
+                <span>NEXUS HUB</span>
+            </div>
+            <button class="collapse-btn" onclick="toggleSidebar()" aria-label="Recolher menu">
+                <i data-lucide="panel-left-close"></i>
+            </button>
+        </div>
+
+        <nav class="nav-menu" aria-label="Navegação de Ferramentas">
+            <button class="nav-item active" onclick="abrir('tools/tela-inicial.html', this)">
+                <i data-lucide="home"></i>
+                <span class="nav-label">Início</span>
+            </button>
+            <button class="nav-item" onclick="abrir('tools/dashboard-sir.html', this)">
+                <i data-lucide="layout-dashboard"></i>
+                <span class="nav-label">Dashboard</span>
+            </button>
+            <button class="nav-item" onclick="abrir('tools/mascara.html', this)">
+                <i data-lucide="zap"></i>
+                <span class="nav-label">Máscaras</span>
+            </button>
+            <button class="nav-item" onclick="abrir('tools/central_script.html', this)">
+                <i data-lucide="terminal-square"></i>
+                <span class="nav-label">Central de Texto</span>
+            </button>   
+            <button class="nav-item" onclick="abrir('tools/buscador_siglas_v4.html', this)">
+                <i data-lucide="book-open-check"></i>
+                <span class="nav-label">Consultor CSL</span>
+            </button>
+            <button class="nav-item" onclick="abrir('tools/torpedo.html', this)">
+                <i data-lucide="radio-tower"></i>
+                <span class="nav-label">Torpedos</span>
+            </button>
+        </nav>
+    </aside>
+
+    <main class="workspace">
+        <iframe id="frame" src="tools/tela-inicial.html" title="Ferramenta Ativa do Nexus"></iframe>
+    </main>
+
+    <script>
+        // Renderiza os ícones do Lucide
+        lucide.createIcons();
+
+        // Lógica de roteamento limpa
+        function abrir(pagina, elemento) {
+            // Previne re-renderização desnecessária da mesma página
+            if (elemento.classList.contains('active')) return;
+
+            // Atualiza estados visuais
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            elemento.classList.add('active');
+
+            // Troca o frame garantindo fluidez via requestAnimationFrame
+            requestAnimationFrame(() => {
+                document.getElementById("frame").src = pagina;
+            });
+        }
+
+        // Controle de colapso estrutural (Desktop)
+        function toggleSidebar() {
+            document.body.classList.toggle('sidebar-collapsed');
+            
+            // Troca o ícone do botão baseando-se no estado
+            const btnIcon = document.querySelector('.collapse-btn i');
+            if (document.body.classList.contains('sidebar-collapsed')) {
+                btnIcon.setAttribute('data-lucide', 'panel-left-open');
+            } else {
+                btnIcon.setAttribute('data-lucide', 'panel-left-close');
+            }
+            // Recria apenas o ícone alterado para não pesar a DOM
+            lucide.createIcons({
+                nameAttr: 'data-lucide'
+            });
+        }
+    </script>
+</body>
+</html>
