@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="https://www.svgrepo.com/show/502412/sale.svg" sizes="any" type="image/svg+xml">
+<title>SIR · Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
+
+  :root {
+    --bg-dark: #0e1117;
+    --bg-panel: #1a1e23;
+    --bg-panel-2: #22272e;
+    --bg-panel-3: #0b0d10;
+    --text-main: #ffffff;
+    --text-muted: #a0aab5;
+    --text-soft: #c7d0da;
+
+    --color-green: #2e7d32;
+    --color-yellow: #d49800;
+    --color-red: #c62828;
+
+    --line: rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.18);
+
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, input { font: inherit; color: inherit; }
+
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 24px; padding: 16px 32px;
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .header-left {
+    display: flex; align-items: center; gap: 24px;
+    font-size: 15px; font-weight: 700; letter-spacing: 1px; color: #fff;
+    min-width: 0; flex-wrap: wrap;
+  }
+
+  .header-brand { white-space: nowrap; }
+
+  .header-actions {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+
+  .header-right {
+    display: flex; gap: 20px; font-size: 12px; font-weight: 500;
+    font-family: var(--font-mono); color: var(--text-muted); align-items: center;
+    white-space: nowrap;
+  }
+
+  .btn-settings, .btn-inbox-toggle, .btn-bell {
+    background: transparent; border: 1px solid #555; color: #ccc; padding: 6px 12px;
+    font-family: var(--font-sans); font-size: 11px; font-weight: 600; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s; border-radius: 2px; letter-spacing: 0.5px;
+    min-height: 36px; white-space: nowrap;
+  }
+
+  .btn-bell { padding: 6px 10px; font-size: 16px; position: relative; }
+
+  .btn-settings:hover, .btn-inbox-toggle:hover, .btn-bell:hover,
+  .btn-settings.active, .btn-inbox-toggle.active, .btn-bell.active {
+    background: #fff; color: #000; border-color: #fff;
+  }
+
+  .bell-wrap { position: relative; flex: 0 0 auto; }
+
+  .notification-menu {
+    position: absolute; top: calc(100% + 8px); left: 0;
+    min-width: 210px; border: 1px solid var(--line-strong);
+    background: #0a0d11; display: none; z-index: 200;
+  }
+  .notification-menu.open { display: block; }
+  .notification-menu button {
+    width: 100%; background: transparent; border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.06); color: #fff;
+    text-align: left; padding: 11px 12px; cursor: pointer;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .notification-menu button:last-child { border-bottom: none; }
+  .notification-menu button:hover { background: #161b22; }
+
+  .search-wrap {
+    display: flex; align-items: stretch;
+    min-width: 260px; max-width: 400px; width: 100%;
+    border: 1px solid var(--line-strong); background: #0a0d11;
+    flex: 1 1 260px;
+  }
+  .search-input {
+    flex: 1; background: transparent; border: none; color: #fff;
+    padding: 0 12px; height: 36px; outline: none;
+    font-size: 13px; font-family: var(--font-mono);
+  }
+  .search-input::placeholder { color: #6f7a87; }
+  .search-btn {
+    width: 42px; min-width: 42px; height: 36px; border: none;
+    border-left: 1px solid var(--line); background: transparent;
+    color: #fff; cursor: pointer; font-size: 14px; transition: all 0.2s;
+  }
+  .search-btn:hover { background: #fff; color: #000; }
+
+  .pulse-dot { width: 10px; height: 10px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+
+  .page-shell {
+    max-width: 1920px; margin: 0 auto; padding: 24px 32px 32px;
+    display: grid; grid-template-columns: 1fr; gap: 24px;
+  }
+
+  .inbox-section {
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    display: none;
+  }
+  .inbox-section.visible { display: block; }
+
+  .inbox-header {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); background: #11151b;
+  }
+  .inbox-title-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .inbox-title { font-size: 14px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+  .inbox-badge {
+    min-width: 24px; height: 24px; padding: 0 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #fff; color: #000; font-size: 11px; font-weight: 800;
+    border-radius: 2px; font-family: var(--font-mono);
+  }
+  .inbox-subtitle { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+  .inbox-body { padding: 0; overflow-x: auto; }
+  .inbox-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--font-mono); }
+  .inbox-table th, .inbox-table td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+  .inbox-table th { font-family: var(--font-sans); font-size: 11px; text-transform: uppercase; color: #aab3bd; background: #171c23; position: sticky; top: 0; z-index: 3; }
+  .inbox-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .inbox-empty { padding: 28px 20px; text-align: center; color: #76818d; font-size: 13px; }
+  .inbox-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-ack {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 30px; padding: 0 10px; border: 1px solid #555; background: transparent;
+    color: #ddd; font-size: 10px; text-transform: uppercase; font-weight: 700;
+    letter-spacing: 0.6px; cursor: pointer; border-radius: 2px; transition: all 0.2s;
+  }
+  .btn-ack:hover { background: #fff; color: #000; border-color: #fff; }
+
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+
+  @media (max-width: 1200px) {
+    header { flex-direction: column; align-items: stretch; }
+    .header-right { justify-content: flex-end; flex-wrap: wrap; }
+    .search-wrap { max-width: 100%; min-width: 200px; }
+  }
+  @media (max-width: 1024px) {
+    main { grid-template-columns: 1fr; }
+    .page-shell { padding: 20px; }
+  }
+
+  .col-title { font-size: 28px; font-weight: 600; text-align: center; margin-bottom: 24px; letter-spacing: 1px; color: #fff; }
+  .grand-total-section { margin-bottom: 32px; }
+  .region-row { display: flex; gap: 12px; margin-bottom: 20px; align-items: stretch; }
+  .my-areas-row { border-bottom: 1px dashed #333; padding-bottom: 24px; margin-bottom: 32px; }
+  .region-total-col { flex: 0 0 160px; display: flex; flex-direction: column; }
+  .cfs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; flex: 1; align-content: start; }
+  .cf-col { display: flex; flex-direction: column; }
+
+  .label-top {
+    font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;
+    margin-bottom: 6px; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .icon-ext { font-size: 10px; margin-left: 2px; opacity: 0.8; }
+  .delta-indicator {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 14px; height: 14px; padding: 0 4px; font-size: 10px;
+    border: 1px solid rgba(255,255,255,0.18); color: #fff;
+    background: rgba(255,255,255,0.08); line-height: 1; border-radius: 2px;
+    font-family: var(--font-mono);
+  }
+
+  .card {
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; border-radius: 2px; font-family: var(--font-sans);
+    font-weight: 400; line-height: 1; position: relative; overflow: hidden;
+    border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .grand-card { height: 70px; font-size: 42px; width: 100%; cursor: pointer; transition: filter 0.2s, transform 0.1s; }
+  .region-card { height: 100%; min-height: 110px; font-size: 72px; width: 100%; cursor: pointer; transition: filter 0.2s, transform 0.1s; }
+  .cf-card { height: 70px; width: 100%; font-size: 38px; cursor: pointer; transition: filter 0.2s, transform 0.1s; }
+  button.card:hover { filter: brightness(1.15); }
+  button.card:active { transform: scale(0.96); }
+  .bg-green { background-color: var(--color-green); }
+  .bg-yellow { background-color: var(--color-yellow); }
+  .bg-red { background-color: var(--color-red); }
+
+  /* ── MODAIS E TABELA ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden; transition: all 0.2s ease;
+  }
+  .modal-overlay.active { opacity: 1; visibility: visible; }
+  .modal-content {
+    background: #1a1e23; border: 1px solid #333; border-radius: 4px;
+    width: 95%; max-width: 1320px; max-height: 88vh; display: flex; flex-direction: column;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+    transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  .modal-overlay.active .modal-content { transform: scale(1); }
+  .modal-header {
+    padding: 16px 20px; border-bottom: 1px solid #333;
+    display: flex; justify-content: space-between; align-items: center;
+    background: #22272e; gap: 12px;
+  }
+  .modal-title-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .modal-title { font-size: 16px; font-weight: 600; color: #fff; letter-spacing: 0.4px; }
+  .modal-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  
+  .copy-btn {
+    font-family: var(--font-sans); font-size: 11px; font-weight: 600;
+    background: #11151b; border: 1px solid #4b5563; color: #fff;
+    padding: 7px 12px; border-radius: 2px; cursor: pointer; text-transform: uppercase;
+    transition: all 0.2s; min-height: 34px; letter-spacing: 0.5px;
+  }
+  .copy-btn:hover { background: #fff; color: #000; }
+  .modal-close-btn { background: transparent; border: none; color: #888; font-size: 28px; cursor: pointer; transition: color 0.2s; line-height: 1; }
+  .modal-close-btn:hover { color: #fff; }
+  
+  .modal-body { padding: 16px; overflow-y: auto; }
+
+  .data-table {
+    width: 100%; border-collapse: collapse; text-align: left;
+    font-size: 12px; font-family: var(--font-mono); table-layout: fixed;
+  }
+  .data-table th {
+    padding: 10px; color: #aaa; text-transform: uppercase;
+    position: sticky; top: -16px; background: #1a1e23;
+    border-bottom: 1px solid #444; font-family: var(--font-sans);
+    font-weight: 600; z-index: 10; white-space: nowrap;
+  }
+  .data-table td {
+    padding: 10px; color: #eee; border-bottom: 1px solid #2a2a2a;
+    vertical-align: middle; word-break: break-word; transition: box-shadow 0.2s;
+  }
+  .data-table tr:hover td { background: #22272e; }
+  .empty-state { text-align: center; padding: 40px; color: #777; font-size: 14px; font-family: var(--font-sans); }
+  .cf-tag { background: #333; padding: 2px 6px; border-radius: 2px; font-weight: bold; color: #fff; display: inline-block; }
+
+  .row-highlight td { background: rgba(255,255,255,0.07) !important; outline: 1px solid rgba(255,255,255,0.45); outline-offset: -1px; }
+  .dimmed td { opacity: 0.45; }
+  .dragging { opacity: 0.35; }
+  .drop-before td { box-shadow: inset 0 2px 0 #ffffff !important; }
+  .drop-after td { box-shadow: inset 0 -2px 0 #ffffff !important; }
+
+  /* ── SISTEMA DE CORES PARA EVENTOS ── */
+  .color-col { width: 44px; text-align: center; }
+  .color-picker { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 100%; }
+  .color-dot { 
+    width: 14px; height: 14px; border-radius: 50%; cursor: pointer; 
+    border: 1px solid rgba(255,255,255,0.2); transition: transform 0.2s; 
+  }
+  .color-dot:hover { transform: scale(1.2); }
+  .color-menu {
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    background: #0a0d11; border: 1px solid var(--line-strong); padding: 8px;
+    display: none; gap: 8px; z-index: 50; flex-wrap: wrap; width: 72px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5); border-radius: 2px;
+  }
+  .color-picker.open .color-menu { display: flex; }
+  
+  .ev-none { background: transparent; }
+  .ev-red { background: #ef4444; }
+  .ev-blue { background: #3b82f6; }
+  .ev-green { background: #10b981; }
+  .ev-yellow { background: #f59e0b; }
+  .ev-purple { background: #8b5cf6; }
+  .ev-orange { background: #f97316; }
+
+  .ticket-row[data-event-color="red"] td:first-child { box-shadow: inset 4px 0 0 0 #ef4444; }
+  .ticket-row[data-event-color="blue"] td:first-child { box-shadow: inset 4px 0 0 0 #3b82f6; }
+  .ticket-row[data-event-color="green"] td:first-child { box-shadow: inset 4px 0 0 0 #10b981; }
+  .ticket-row[data-event-color="yellow"] td:first-child { box-shadow: inset 4px 0 0 0 #f59e0b; }
+  .ticket-row[data-event-color="purple"] td:first-child { box-shadow: inset 4px 0 0 0 #8b5cf6; }
+  .ticket-row[data-event-color="orange"] td:first-child { box-shadow: inset 4px 0 0 0 #f97316; }
+
+  /* ── STATUS DROPDOWN — position:fixed para sobrepor tudo ── */
+  .status-cell { width: 220px; }
+  .status-dropdown { position: relative; width: 100%; }
+  .status-trigger {
+    width: 100%; min-height: 34px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 8px 10px;
+    background: #050607; border: 1px solid rgba(255,255,255,0.16);
+    color: #fff; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.4px; cursor: pointer; border-radius: 0;
+  }
+  .status-trigger:hover,
+  .status-dropdown.open .status-trigger { border-color: rgba(255,255,255,0.34); background: #0c0f13; }
+  .status-value { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+  .status-pill { width: 7px; height: 7px; border-radius: 50%; background: #fff; flex: 0 0 auto; }
+  .status-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .status-caret { font-size: 10px; color: #8f99a3; flex: 0 0 auto; }
+
+  .status-menu-portal {
+    position: fixed; z-index: 9999; min-width: 200px;
+    background: #050607; border: 1px solid rgba(255,255,255,0.22);
+    display: none; box-shadow: 0 0 0 9999px rgba(0,0,0,0.28), 0 8px 24px rgba(0,0,0,0.7);
+  }
+  .status-menu-portal.open { display: block; }
+  .status-option {
+    width: 100%; border: none; background: transparent; color: #fff;
+    text-align: left; padding: 9px 12px; font-size: 11px; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .status-option:last-child { border-bottom: none; }
+  .status-option:hover, .status-option.active { background: #13181f; }
+  .status-option .status-pill { width: 6px; height: 6px; }
+
+  .status-em-analise .status-pill { background: #ffffff; }
+  .status-acionada .status-pill { background: #6ee7b7; }
+  .status-indisponibilidade .status-pill { background: #f59e0b; }
+  .status-area-de-risco .status-pill { background: #ef4444; }
+  .status-pendente-de-acesso .status-pill { background: #94a3b8; }
+
+  .drag-col { width: 44px; text-align: center; }
+  .drag-handle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; min-height: 24px; border: 1px solid rgba(255,255,255,0.12);
+    color: #9da6b1; background: transparent; cursor: grab; user-select: none; font-size: 10px;
+  }
+  .drag-handle:active { cursor: grabbing; }
+
+  .ticket-link-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 30px; min-width: 34px; background: #ffffff; color: #000000;
+    text-decoration: none; padding: 6px 10px; border-radius: 2px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    font-family: var(--font-sans); transition: all 0.2s;
+    white-space: nowrap; border: 1px solid #ffffff; line-height: 1; cursor: pointer;
+  }
+  .ticket-link-btn:hover { background: transparent; color: #ffffff; }
+
+  .cf-checkbox-label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+    font-family: var(--font-mono); cursor: pointer; padding: 10px;
+    border: 1px solid #333; border-radius: 2px; transition: background 0.2s; color: #ccc;
+  }
+  .cf-checkbox-label:hover { background: #22272e; color: #fff; }
+  .cf-checkbox { accent-color: #fff; width: 16px; height: 16px; cursor: pointer; }
+  .btn-save-settings {
+    margin-top: 24px; width: 100%; padding: 14px; background: #fff; color: #000;
+    font-family: var(--font-sans); font-weight: 700; font-size: 13px; cursor: pointer;
+    border: none; border-radius: 2px; text-transform: uppercase; transition: transform 0.1s;
+  }
+  .btn-save-settings:active { transform: scale(0.98); }
+</style>
+</head>
+<body>
+
+<div id="status-menu-portal" class="status-menu-portal" role="listbox"></div>
+
+<header>
+  <div class="header-left">
+    <span class="header-brand">SIR DASHBOARD - COP REDE FIBRA ES/RJ</span>
+    <div class="header-actions">
+      <button class="btn-settings" onclick="openSettings()">Minhas Áreas</button>
+      <button class="btn-inbox-toggle" id="btn-inbox-toggle" onclick="toggleInbox()">Novos tickets</button>
+
+      <div class="bell-wrap">
+        <button class="btn-bell" id="btn-bell" aria-label="Notificações" onclick="toggleNotificationMenu(event)">🔔</button>
+        <div class="notification-menu" id="notification-menu">
+          <button type="button" onclick="enableNotifications()">Habilitar notificações</button>
+          <button type="button" onclick="disableNotifications()">Desabilitar notificações</button>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <input type="text" id="ticket-search-input" class="search-input" placeholder="Buscar Ticket..." autocomplete="off">
+        <button class="search-btn" id="ticket-search-btn" aria-label="Buscar Ticket">⌕</button>
+      </div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div id="countdown">Sincronizando...</div>
+    <div id="last-update">--:--:--</div>
+    <div class="pulse-dot" id="status-dot"></div>
+  </div>
+</header>
+
+<div class="page-shell">
+  <section class="inbox-section" id="inbox-section">
+    <div class="inbox-header">
+      <div class="inbox-title-wrap">
+        <div class="inbox-title">Novas Entradas</div>
+        <div class="inbox-badge" id="inbox-count">0</div>
+        <div class="inbox-subtitle"></div>
+      </div>
+    </div>
+    <div class="inbox-body">
+      <table class="inbox-table">
+        <thead>
+          <tr>
+            <th>Tipo</th><th>CF</th><th>Ticket</th>
+            <th>Designação</th><th>Detalhe</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="inbox-tbody"></tbody>
+      </table>
+      <div id="inbox-empty" class="inbox-empty">Nenhuma nova RAL/REC em suas áreas. (Atualização a cada 5min)</div>
+    </div>
+  </section>
+  <main id="main-grid"></main>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="modal-title" id="modal-title">Detalhes</div>
+        <button id="copy-desig-btn" class="copy-btn" onclick="copyDesignations()" style="display:none;">Copiar Designações</button>
+      </div>
+      <div class="modal-tools">
+        <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="color-col">#</th>
+            <th class="drag-col">↕️</th>
+            <th>CF</th><th>Ticket</th><th>Designação</th>
+            <th id="col3-header">Detalhe</th>
+            <th>Status</th><th>Acesso</th>
+          </tr>
+        </thead>
+        <tbody id="modal-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settings-modal" onclick="closeSettings()">
+  <div class="modal-content" style="max-width:500px;" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Selecionar Minhas Áreas</div>
+      <button class="modal-close-btn" onclick="closeSettings()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="settings-cf-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+      <button class="btn-save-settings" onclick="saveSettings()">Salvar Preferências</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONFIGURAÇÃO E CONSTANTES
+═══════════════════════════════════════════════════════ */
+const URLS = {
+  ral: 'https://raw.githubusercontent.com/cpralonrj-pralon/embratel-sir/refs/heads/main/dados_ral.csv',
+  rec: 'https://raw.githubusercontent.com/cpralonrj-pralon/embratel-sir/refs/heads/main/dados_rec.csv'
+};
+const INTERVAL = 300000;
+const CF_COL = 'CF Exec.';
+
+const REGIONS = {
+  'ES': { 'MTN': ['RT/VTA /MTN/FFA/FO'], 'MTS': ['RT/VTA /MTS/FFA/FO'], 'NOR': ['RT/VTA /NOR/FFA/FO'], 'SUL': ['RT/VTA /SUL/FFA/FO'] },
+  'RIO A': { 'SUF': ['RT/RJO /SUF/NET/FO','RC/RJO /SUF/NET/FO'], 'SEF': ['RT/RJO /SEF/NET/FO','RC/RJO /SEF/NET/FO'], 'NOF': ['RT/RJO /NOF/NET/FO','RC/RJO /NOF/NET/FO'], 'LGS': ['RT/RJO /LGS/NET/FO','RC/RJO /LGS/NET/FO'], 'CZS': ['RT/RJO /CZS/NET/FO','RC/RJO /CZS/NET/FO'], 'SU2': ['RT/RJO /SU2/NET/FO','RC/RJO /SU2/NET/FO'], 'OE1': ['RT/RJO /OE1/NET/FO','RC/RJO /OE1/NET/FO'] },
+  'RIO B': { 'NO1': ['RT/RJO /NO1/NET/FO','RC/RJO /NO1/NET/FO'], 'NO2': ['RT/RJO /NO2/NET/FO','RC/RJO /NO2/NET/FO'], 'BX1': ['RT/RJO /BX1/NET/FO','RC/RJO /BX1/NET/FO'], 'MTP': ['RT/RJO /MTP/NET/FO','RC/RJO /MTP/NET/FO'], 'NO3': ['RT/RJO /NO3/PCS/FO','RC/RJO /NO3/NET/FO'] }
+};
+
+const STATUS_OPTIONS = ['Em análise','Acionada','Indisponibilidade','Área de risco','Pendente de acesso'];
+
+let userSavedAreas = JSON.parse(localStorage.getItem('sir_minhas_areas')) || [];
+let notificationsEnabled = localStorage.getItem('sir_notif_enabled') === 'true';
+
+const patternToCF = {};
+for (const [, cfs] of Object.entries(REGIONS))
+  for (const [cfKey, patterns] of Object.entries(cfs))
+    for (const p of patterns) patternToCF[p] = cfKey;
+
+let countdownVal = INTERVAL / 1000;
+let countdownTimer = null;
+let isFirstLoad = true;
+
+window.modalData = { ral: {}, rec: {} };
+window.currentDesignationsToCopy = '';
+
+const appState = {
+  searchQueryPending: null,
+  searchResultPending: null,
+  currentSnapshot: { ral: new Map(), rec: new Map() },
+  lastSnapshotKeys: { ral: new Set(), rec: new Set() }, 
+  previousCounts: { ral: {}, rec: {} },
+  currentCounts: { ral: {}, rec: {} },
+  inboxItems: [],
+  acknowledgedInboxKeys: new Set(),
+  currentModalType: null,
+  currentModalKey: null,
+  currentModalTitle: null,
+  modalDragRow: null,
+  activePortalDropdown: null
+};
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════ */
+const normalizeStr   = s => String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const escapeHtml     = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const slugifyStatus  = s => normalizeStr(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+const normTicket     = t => String(t||'').replace(/\s+/g,'').replace(/[^A-Za-z0-9/-]/g,'').toUpperCase();
+const makeIdentity   = (tk,i) => `${tk}::${normTicket(i.ticket)}::${normalizeStr(i.cfOrigem)}::${normalizeStr(i.designacao)}::${normalizeStr(i.extra)}`;
+
+function animateValue(el, start, end, dur) {
+  let ts = null;
+  const step = t => {
+    if (!ts) ts = t;
+    const p = Math.min((t-ts)/dur,1);
+    el.innerHTML = Math.floor((1-Math.pow(1-p,4))*(end-start)+start);
+    p < 1 ? requestAnimationFrame(step) : (el.innerHTML = end);
+  };
+  requestAnimationFrame(step);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PARSING CSV (Corrigido Leitura da RAL)
+═══════════════════════════════════════════════════════ */
+function parseRaw(text, isRal) {
+  const lines = text.split('\n');
+  if (lines.length < 2) return { counts:{}, details:{}, total:0 };
+  let headerLine='', headerIdx=0;
+  for (let i=0;i<lines.length;i++) { const t=lines[i].trim(); if(t){ headerLine=t; headerIdx=i; break; } }
+  const clean = s => s.replace(/^["'\s]+|["'\s]+$/g,'').trim();
+  const check = sep => { const a=headerLine.split(sep).map(clean); const i=a.findIndex(h=>h.toLowerCase()===CF_COL.toLowerCase()); return i!==-1?{sep,idx:i,hArray:a}:null; };
+  const vs = check(',')||check(';');
+  if (!vs) return { counts:{}, details:{}, total:0 };
+  return parseWithSep(lines, headerIdx, vs.idx, vs.sep, isRal, vs.hArray);
+}
+
+function parseWithSep(lines, headerIdx, cfIdx, sep, isRal, headers) {
+  const clean    = s => s.replace(/^["'\s]+|["'\s]+$/g,'').trim();
+  const getIdx   = kw => headers.findIndex(h=>normalizeStr(h).includes(kw));
+  
+  // CORE FIX: Busca exata e blindada contra a coluna "TIPO RAL"
+  let numIdx = getIdx('NUM.RECUP');
+  if (numIdx === -1) numIdx = getIdx('NUM.RAL');
+  if (numIdx === -1) {
+      numIdx = headers.findIndex(h => {
+          const n = normalizeStr(h);
+          return n === 'TICKET' || n === 'NUMERO' || n === 'NUM';
+      });
+  }
+
+  const desigIdx = getIdx('DESIGNACAO');
+  const tipoIdx  = getIdx('TIPO RAL');
+  const cliIdx   = getIdx('CLIENTE');
+  
+  const allP     = Object.keys(patternToCF);
+  const counts={}, details={};
+  allP.forEach(p=>{ counts[p]=0; details[p]=[]; });
+  let total=0;
+  
+  for (let i=headerIdx+1;i<lines.length;i++) {
+    const line=lines[i];
+    if (!line||line.trim()==='') continue;
+    if (isRal&&line.toUpperCase().indexOf('QUALIDADE')!==-1) continue;
+    
+    const cells=line.split(sep).map(clean);
+    if (cells.length<=cfIdx) continue;
+    const cf=cells[cfIdx];
+    if (!cf) continue;
+    
+    for (const p of allP) {
+      if (cf===p) {
+        counts[p]++; total++;
+        const ticket  = numIdx>-1&&cells[numIdx]?cells[numIdx]:'N/D';
+        const desig   = desigIdx>-1&&cells[desigIdx]?cells[desigIdx]:'N/D';
+        let extra='N/D';
+        if (isRal&&tipoIdx>-1&&cells[tipoIdx]) extra=cells[tipoIdx];
+        else if (!isRal&&cliIdx>-1&&cells[cliIdx]) extra=cells[cliIdx];
+        details[p].push({ ticket, designacao:desig, extra, cfOrigem:patternToCF[p] });
+      }
+    }
+  }
+  return { counts, details, total };
+}
+
+function buildRegionData(counts, detailsMap, isRal) {
+  const result={};
+  const tk=isRal?'ral':'rec';
+  window.modalData[tk]={};
+  let grand=[];
+  for (const [rn,cfs] of Object.entries(REGIONS)) {
+    const cfData={};
+    let rt=0, rArr=[];
+    for (const [cfKey,patterns] of Object.entries(cfs)) {
+      let n=0, cfArr=[];
+      for (const p of patterns) { n+=(counts[p]||0); if(detailsMap[p]) cfArr.push(...detailsMap[p]); }
+      cfData[cfKey]=n; rt+=n;
+      window.modalData[tk][cfKey]=cfArr; rArr.push(...cfArr);
+    }
+    result[rn]={items:cfData,total:rt};
+    window.modalData[tk][rn]=rArr; grand.push(...rArr);
+  }
+  window.modalData[tk]['ALL']=grand;
+  return result;
+}
+
+function getFlatCFData(rd) {
+  const flat={};
+  for (const reg in rd) for (const cf in rd[reg].items) flat[cf]=rd[reg].items[cf];
+  return flat;
+}
+
+function getDeltaIndicator(tk,cf,val) {
+  const p=appState.previousCounts[tk][cf];
+  if (p===undefined||val<=p) return '';
+  return `<span class="delta-indicator" title="Aumento desde a atualização anterior">+${val-p}</span>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   NOTIFICAÇÕES
+═══════════════════════════════════════════════════════ */
+function updateBellState() {
+  const bell = document.getElementById('btn-bell');
+  bell.textContent = notificationsEnabled ? '🔔' : '🔕';
+  bell.title = notificationsEnabled ? 'Notificações habilitadas' : 'Notificações desabilitadas';
+  bell.classList.toggle('active', notificationsEnabled);
+}
+
+function toggleNotificationMenu(e) {
+  e.stopPropagation();
+  document.getElementById('notification-menu').classList.toggle('open');
+}
+
+function enableNotifications() {
+  document.getElementById('notification-menu').classList.remove('open');
+  if (!('Notification' in window)) { alert('Este navegador não suporta notificações.'); return; }
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') {
+      notificationsEnabled = true;
+      localStorage.setItem('sir_notif_enabled','true');
+      updateBellState();
+      new Notification('SIR Dashboard', { body: 'Notificações habilitadas com sucesso!', icon: '' });
+    } else {
+      alert('Permissão de notificação negada pelo sistema.');
+    }
+  });
+}
+
+function disableNotifications() {
+  document.getElementById('notification-menu').classList.remove('open');
+  notificationsEnabled = false;
+  localStorage.setItem('sir_notif_enabled','false');
+  updateBellState();
+}
+
+function sendNotification(cf, typeLabel, ticket) {
+  if (!notificationsEnabled || Notification.permission !== 'granted') return;
+  new Notification(`Nova entrada em ${cf}`, {
+    body: `${typeLabel} ${ticket} detectado na sua área.`,
+    icon: ''
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   PERSISTÊNCIA GERAL DA TABELA E INBOX
+═══════════════════════════════════════════════════════ */
+const STORAGE_TABLE = 'sir_table_state_v4'; 
+const STORAGE_INBOX = 'sir_inbox_state_v5';
+
+function saveInboxState() {
+  const state = {
+    inboxItems: appState.inboxItems,
+    acknowledgedKeys: Array.from(appState.acknowledgedInboxKeys),
+    lastSnapshotKeys: { ral: Array.from(appState.lastSnapshotKeys.ral), rec: Array.from(appState.lastSnapshotKeys.rec) }
+  };
+  localStorage.setItem(STORAGE_INBOX, JSON.stringify(state));
+}
+
+function loadInboxState() {
+  try {
+    const state = JSON.parse(localStorage.getItem(STORAGE_INBOX));
+    if (state) {
+      appState.inboxItems = state.inboxItems || [];
+      appState.acknowledgedInboxKeys = new Set(state.acknowledgedKeys || []);
+      if (state.lastSnapshotKeys) {
+        appState.lastSnapshotKeys.ral = new Set(state.lastSnapshotKeys.ral || []);
+        appState.lastSnapshotKeys.rec = new Set(state.lastSnapshotKeys.rec || []);
+      }
+    }
+  } catch (e) { console.error('Erro de persistência:', e); }
+}
+
+function saveTableState() {
+  const tbody = document.getElementById('modal-tbody');
+  if (!tbody || !appState.currentModalKey) return;
+
+  const key = `${appState.currentModalType}::${appState.currentModalKey}`;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const order = [];
+
+  rows.forEach(row => {
+      const identity = row.dataset.identity || '';
+      const dropdown = row.querySelector('.status-dropdown');
+      const status   = dropdown ? dropdown.dataset.currentStatus : 'Em análise';
+      const eventColor = row.dataset.eventColor || 'none';
+      const dimmed   = row.classList.contains('dimmed');
+      
+      order.push({ identity, status, eventColor, dimmed });
+  });
+
+  const all = JSON.parse(localStorage.getItem(STORAGE_TABLE) || '{}');
+  all[key] = order;
+  localStorage.setItem(STORAGE_TABLE, JSON.stringify(all));
+}
+
+function loadTableState(typeKey, dataKey) {
+  const key = `${typeKey}::${dataKey}`;
+  const all = JSON.parse(localStorage.getItem(STORAGE_TABLE) || '{}');
+  return all[key] || null;
+}
+
+/* ═══════════════════════════════════════════════════════
+   HTML DA TABELA — Cores de Evento
+═══════════════════════════════════════════════════════ */
+function toggleColorMenu(dot, e) {
+    e.stopPropagation();
+    const picker = dot.parentElement;
+    const isOpen = picker.classList.contains('open');
+    document.querySelectorAll('.color-picker.open').forEach(p => p.classList.remove('open'));
+    if (!isOpen) picker.classList.add('open');
+}
+
+function setEventColor(dot, colorName, e) {
+    e.stopPropagation();
+    const picker = dot.closest('.color-picker');
+    const mainDot = picker.querySelector('.current-color');
+    const row = picker.closest('tr');
+    
+    mainDot.className = `color-dot current-color ev-${colorName}`;
+    picker.classList.remove('open');
+    
+    row.dataset.eventColor = colorName;
+    saveTableState();
+}
+
+function buildColorPickerHTML(currentColor) {
+    const c = currentColor || 'none';
+    return `
+    <div class="color-picker">
+      <div class="color-dot current-color ev-${c}" onclick="toggleColorMenu(this, event)"></div>
+      <div class="color-menu">
+        <div class="color-dot ev-none" onclick="setEventColor(this, 'none', event)"></div>
+        <div class="color-dot ev-red" onclick="setEventColor(this, 'red', event)"></div>
+        <div class="color-dot ev-blue" onclick="setEventColor(this, 'blue', event)"></div>
+        <div class="color-dot ev-green" onclick="setEventColor(this, 'green', event)"></div>
+        <div class="color-dot ev-yellow" onclick="setEventColor(this, 'yellow', event)"></div>
+        <div class="color-dot ev-purple" onclick="setEventColor(this, 'purple', event)"></div>
+        <div class="color-dot ev-orange" onclick="setEventColor(this, 'orange', event)"></div>
+      </div>
+    </div>`;
+}
+
+function buildStatusTriggerHTML(status) {
+  const slug = slugifyStatus(status);
+  return `
+    <div class="status-dropdown" data-current-status="${escapeHtml(status)}">
+      <button type="button" class="status-trigger status-${slug}" aria-expanded="false">
+        <span class="status-value">
+          <span class="status-pill"></span>
+          <span class="status-text">${escapeHtml(status)}</span>
+        </span>
+        <span class="status-caret">▼</span>
+      </button>
+    </div>`;
+}
+
+function openModal(dataKey, isRal, titleOverride, highlightTicket = null) {
+  const tk  = isRal ? 'ral' : 'rec';
+  const arr = window.modalData[tk][dataKey] || [];
+
+  appState.currentModalType = tk;
+  appState.currentModalKey  = dataKey;
+  appState.currentModalTitle = titleOverride;
+  appState.modalDragRow = null;
+
+  document.getElementById('modal-title').textContent   = titleOverride;
+  document.getElementById('col3-header').textContent    = isRal ? 'Tipo RAL' : 'Cliente';
+
+  const copyBtn = document.getElementById('copy-desig-btn');
+
+  if (!isRal) {
+    const valid = arr.map(i=>i.designacao).filter(d=>d!=='N/D'&&(d.match(/[A-Za-z]/g)||[]).length<=6);
+    if (valid.length) {
+      window.currentDesignationsToCopy = valid.join(' OU ');
+      copyBtn.style.display='inline-block'; copyBtn.textContent='Copiar Designações';
+    } else { copyBtn.style.display='none'; window.currentDesignationsToCopy=''; }
+  } else { copyBtn.style.display='none'; window.currentDesignationsToCopy=''; }
+
+  const tbody = document.getElementById('modal-tbody');
+
+  if (!arr.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">Nenhum ticket mapeado nesta seleção.</div></td></tr>`;
+  } else {
+    const rowsHtml = arr.map(i => {
+      const link = generateTicketURL(i.ticket, isRal, i.designacao);
+      const btnHtml = link !== '#'
+        ? `<button onclick="openTicketWindow('${link}')" class="ticket-link-btn">↗</button>`
+        : `<span style="color:#555;">N/A</span>`;
+      const hl   = highlightTicket && normTicket(i.ticket)===normTicket(highlightTicket) ? 'row-highlight' : '';
+      const iden = makeIdentity(tk, i);
+      
+      return `
+        <tr draggable="true" class="ticket-row ${hl}"
+            data-ticket="${escapeHtml(i.ticket)}"
+            data-identity="${escapeHtml(iden)}"
+            data-event-color="none">
+          <td class="color-col">${buildColorPickerHTML('none')}</td>
+          <td class="drag-col"><span class="drag-handle" title="Arraste para reordenar">⋮⋮</span></td>
+          <td><span class="cf-tag">${escapeHtml(i.cfOrigem)}</span></td>
+          <td>${escapeHtml(i.ticket)}</td>
+          <td>${escapeHtml(i.designacao)}</td>
+          <td>${escapeHtml(i.extra)}</td>
+          <td class="status-cell">${buildStatusTriggerHTML('Em análise')}</td>
+          <td>${btnHtml}</td>
+        </tr>`;
+    }).join('');
+    tbody.innerHTML = rowsHtml;
+
+    const saved = loadTableState(tk, dataKey);
+    if (saved) {
+      restoreTableState(tbody, saved);
+    }
+  }
+
+  closeStatusPortal();
+  document.getElementById('modal-overlay').classList.add('active');
+
+  if (arr.length) {
+    initModalInteractions();
+    if (highlightTicket) {
+      const t = Array.from(tbody.querySelectorAll('tr[data-ticket]'))
+        .find(r => normTicket(r.dataset.ticket)===normTicket(highlightTicket));
+      if (t) t.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+  }
+}
+
+function restoreTableState(tbody, saved) {
+  const rowByIdentity = {};
+  Array.from(tbody.querySelectorAll('tr.ticket-row')).forEach(r => {
+    rowByIdentity[r.dataset.identity] = r;
+  });
+
+  tbody.innerHTML = '';
+
+  saved.forEach(entry => {
+    let row = rowByIdentity[entry.identity];
+    if (!row) return;
+    
+    applyStatusToRowSilent(row, entry.status || 'Em análise');
+    
+    const color = entry.eventColor || 'none';
+    row.dataset.eventColor = color;
+    const colorDot = row.querySelector('.current-color');
+    if(colorDot) colorDot.className = `color-dot current-color ev-${color}`;
+
+    tbody.appendChild(row);
+  });
+
+  Object.values(rowByIdentity).forEach(r => {
+    if (!r.parentElement) tbody.appendChild(r);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   STATUS DROPDOWN — PORTAL (position:fixed)
+═══════════════════════════════════════════════════════ */
+const portal = document.getElementById('status-menu-portal');
+
+function buildPortalOptions(currentStatus) {
+  return STATUS_OPTIONS.map(status => {
+    const slug = slugifyStatus(status);
+    const active = slugifyStatus(currentStatus) === slug ? 'active' : '';
+    return `<button type="button" class="status-option status-${slug} ${active}" data-status="${escapeHtml(status)}">
+      <span class="status-pill"></span>
+      <span>${escapeHtml(status)}</span>
+    </button>`;
+  }).join('');
+}
+
+function openStatusPortal(dropdown) {
+  const trigger = dropdown.querySelector('.status-trigger');
+  const rect    = trigger.getBoundingClientRect();
+  const current = dropdown.dataset.currentStatus || 'Em análise';
+
+  portal.innerHTML = buildPortalOptions(current);
+
+  const menuH = 210; 
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const top = spaceBelow >= menuH ? rect.bottom + 4 : rect.top - menuH - 4;
+
+  portal.style.left  = rect.left + 'px';
+  portal.style.top   = top + 'px';
+  portal.style.width = Math.max(rect.width, 200) + 'px';
+  portal.classList.add('open');
+
+  appState.activePortalDropdown = dropdown;
+  dropdown.classList.add('open');
+  trigger.setAttribute('aria-expanded','true');
+
+  portal.querySelectorAll('.status-option').forEach(opt => {
+    opt.addEventListener('click', e => {
+      e.stopPropagation();
+      const row = dropdown.closest('tr');
+      applyStatusToRow(row, opt.dataset.status);
+      closeStatusPortal();
+      saveTableState();
+    });
+  });
+}
+
+function closeStatusPortal() {
+  portal.classList.remove('open');
+  portal.innerHTML = '';
+  if (appState.activePortalDropdown) {
+    appState.activePortalDropdown.classList.remove('open');
+    const trig = appState.activePortalDropdown.querySelector('.status-trigger');
+    if (trig) trig.setAttribute('aria-expanded','false');
+    appState.activePortalDropdown = null;
+  }
+}
+
+document.querySelector ? document.addEventListener('DOMContentLoaded', () => {
+  const mb = document.querySelector('.modal-body');
+  if (mb) mb.addEventListener('scroll', closeStatusPortal, { passive:true });
+}) : null;
+
+function applyStatusToRow(row, status) {
+  applyStatusToRowSilent(row, status);
+  saveTableState();
+}
+
+function applyStatusToRowSilent(row, status) {
+  const dropdown = row.querySelector('.status-dropdown');
+  if (!dropdown) return;
+  const trigger = dropdown.querySelector('.status-trigger');
+  const text    = dropdown.querySelector('.status-text');
+  const slug    = slugifyStatus(status);
+
+  dropdown.dataset.currentStatus = status;
+  trigger.className = `status-trigger status-${slug}`;
+  if (text) text.textContent = status;
+
+  const shouldDim = status === 'Área de risco' || status === 'Pendente de acesso';
+  row.classList.toggle('dimmed', shouldDim);
+
+  if (shouldDim) {
+    const tbody = row.parentElement;
+    if (tbody) tbody.appendChild(row);
+  }
+}
+
+function initStatusDropdowns() {
+  document.querySelectorAll('#modal-tbody .status-dropdown').forEach(dropdown => {
+    const trigger = dropdown.querySelector('.status-trigger');
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      if (appState.activePortalDropdown === dropdown) { closeStatusPortal(); return; }
+      closeStatusPortal();
+      openStatusPortal(dropdown);
+    });
+  });
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.status-dropdown') && !e.target.closest('#status-menu-portal')) {
+    closeStatusPortal();
+  }
+  if (!e.target.closest('.color-picker')) {
+    document.querySelectorAll('.color-picker.open').forEach(p => p.classList.remove('open'));
+  }
+  if (!e.target.closest('.bell-wrap')) {
+    document.getElementById('notification-menu').classList.remove('open');
+  }
+});
+
+/* ═══════════════════════════════════════════════════════
+   DRAG AND DROP 
+═══════════════════════════════════════════════════════ */
+function clearDropMarkers() {
+  document.querySelectorAll('#modal-tbody tr.drop-before, #modal-tbody tr.drop-after').forEach(r => r.classList.remove('drop-before','drop-after'));
+}
+
+function initDragAndDropRows() {
+  const tbody = document.getElementById('modal-tbody');
+  if (!tbody) return;
+
+  tbody.ondragstart = e => {
+    const row = e.target.closest('tr');
+    if (!row) return;
+    appState.modalDragRow = row;
+    row.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', row.dataset.identity || '');
+  };
+
+  tbody.ondragend = e => {
+    const row = e.target.closest('tr');
+    if (row) row.classList.remove('dragging');
+    clearDropMarkers();
+    appState.modalDragRow = null;
+    saveTableState();
+  };
+
+  tbody.ondragover = e => {
+    e.preventDefault();
+    const target = e.target.closest('tr');
+    if (!target || !appState.modalDragRow || appState.modalDragRow === target) return;
+
+    clearDropMarkers();
+    const rect   = target.getBoundingClientRect();
+    const offset = e.clientY - rect.top;
+    target.classList.add(offset < rect.height / 2 ? 'drop-before' : 'drop-after');
+  };
+
+  tbody.ondrop = e => {
+    e.preventDefault();
+    const target = e.target.closest('tr');
+    if (!target || !appState.modalDragRow || appState.modalDragRow === target) {
+      clearDropMarkers();
+      return;
+    }
+
+    const dragged  = appState.modalDragRow;
+    const rect     = target.getBoundingClientRect();
+    const offset   = e.clientY - rect.top;
+
+    if (offset < rect.height / 2) {
+      tbody.insertBefore(dragged, target);
+    } else {
+      tbody.insertBefore(dragged, target.nextSibling);
+    }
+
+    clearDropMarkers();
+    saveTableState();
+  };
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL INTERACTIONS GERAL
+═══════════════════════════════════════════════════════ */
+function initModalInteractions() {
+  initStatusDropdowns();
+  initDragAndDropRows();
+}
+
+function closeModal() {
+  saveTableState();
+  closeStatusPortal();
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('active');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeSettings(); closeStatusPortal(); }
+});
+
+/* ═══════════════════════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════════════════════ */
+function openSettings() {
+  const container = document.getElementById('settings-cf-list');
+  let html = '';
+  for (const reg in REGIONS) {
+    html += `<div style="grid-column:1/-1;margin-top:12px;font-size:11px;font-weight:bold;color:#666;border-bottom:1px solid #333;padding-bottom:4px;text-transform:uppercase;">${reg}</div>`;
+    for (const cf in REGIONS[reg]) {
+      const checked = userSavedAreas.includes(cf) ? 'checked' : '';
+      html += `<label class="cf-checkbox-label"><input type="checkbox" class="cf-checkbox" value="${cf}" ${checked}>${cf}</label>`;
+    }
+  }
+  container.innerHTML = html;
+  document.getElementById('settings-modal').classList.add('active');
+}
+
+function saveSettings() {
+  userSavedAreas = Array.from(document.querySelectorAll('.cf-checkbox:checked')).map(cb=>cb.value);
+  localStorage.setItem('sir_minhas_areas', JSON.stringify(userSavedAreas));
+  closeSettings();
+  isFirstLoad = true;
+  loadAll();
+}
+
+/* ═══════════════════════════════════════════════════════
+   INBOX / NOVAS ENTRADAS 
+═══════════════════════════════════════════════════════ */
+function buildSnapshotMap(tk) {
+  const snap = new Map();
+  (window.modalData[tk]['ALL']||[]).forEach(i => snap.set(makeIdentity(tk,i),{...i}));
+  return snap;
+}
+
+function computeFlatCFCounts(ral, rec) {
+  appState.currentCounts.ral = getFlatCFData(ral);
+  appState.currentCounts.rec = getFlatCFData(rec);
+}
+
+function updateInboxWithNewEntries(isStartup = false) {
+  if (!userSavedAreas.length) { renderInbox(); return; }
+  let hasChanges = false;
+
+  ['ral','rec'].forEach(tk => {
+    const previousKeys = appState.lastSnapshotKeys[tk];
+    const current  = appState.currentSnapshot[tk];
+
+    if (isStartup && previousKeys.size === 0) return;
+
+    current.forEach((item, identity) => {
+      if (previousKeys.has(identity)) return;
+      if (!userSavedAreas.includes(item.cfOrigem)) return;
+      if (appState.acknowledgedInboxKeys.has(identity)) return;
+      if (appState.inboxItems.some(e=>e.identity===identity)) return;
+      
+      appState.inboxItems.unshift({ identity, typeKey:tk, typeLabel:tk.toUpperCase(), ...item });
+      hasChanges = true;
+      
+      if (!isStartup) sendNotification(item.cfOrigem, tk.toUpperCase(), item.ticket);
+    });
+  });
+
+  if (hasChanges || isStartup) {
+      renderInbox();
+      saveInboxState();
+  }
+}
+
+function renderInbox() {
+  const tbody    = document.getElementById('inbox-tbody');
+  const empty    = document.getElementById('inbox-empty');
+  const badge    = document.getElementById('inbox-count');
+  const btnToggle= document.getElementById('btn-inbox-toggle');
+
+  if (!appState.inboxItems.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = appState.inboxItems.map(item => {
+      const url = generateTicketURL(item.ticket, item.typeKey==='ral', item.designacao);
+      const acc = url !== '#' ? `<button class="ticket-link-btn" onclick="openTicketWindow('${url}')">↗</button>` : `<span style="color:#555;">N/A</span>`;
+      return `<tr data-inbox-key="${escapeHtml(item.identity)}">
+        <td>${escapeHtml(item.typeLabel)}</td>
+        <td><span class="cf-tag">${escapeHtml(item.cfOrigem)}</span></td>
+        <td>${escapeHtml(item.ticket)}</td>
+        <td>${escapeHtml(item.designacao)}</td>
+        <td>${escapeHtml(item.extra)}</td>
+        <td><div class="inbox-actions">${acc}<button class="btn-ack" onclick="acknowledgeInboxItem('${escapeHtml(item.identity)}')">Estou Ciente</button></div></td>
+      </tr>`;
+    }).join('');
+  }
+  badge.textContent = appState.inboxItems.length;
+  btnToggle.classList.toggle('active', document.getElementById('inbox-section').classList.contains('visible'));
+}
+
+function acknowledgeInboxItem(identity) {
+  appState.acknowledgedInboxKeys.add(identity);
+  appState.inboxItems = appState.inboxItems.filter(i=>i.identity!==identity);
+  renderInbox();
+  saveInboxState();
+}
+
+function toggleInbox(forceState) {
+  const section = document.getElementById('inbox-section');
+  const open = typeof forceState==='boolean' ? forceState : !section.classList.contains('visible');
+  section.classList.toggle('visible', open);
+  document.getElementById('btn-inbox-toggle').classList.toggle('active', open);
+}
+
+/* ═══════════════════════════════════════════════════════
+   BUSCA E URL DE TICKET
+═══════════════════════════════════════════════════════ */
+function searchTicket() {
+  const input = document.getElementById('ticket-search-input');
+  const query = normTicket(input.value);
+  if (!query) { input.focus(); return; }
+
+  const pools = [{ tk:'ral', isRal:true }, { tk:'rec', isRal:false }];
+  let found = null;
+  for (const p of pools) {
+    const match = (window.modalData[p.tk]['ALL']||[]).find(i=>normTicket(i.ticket).includes(query));
+    if (match) { found={ ...p, item:match, dataKey:match.cfOrigem, title:`${p.tk.toUpperCase()} :: ${match.cfOrigem}` }; break; }
+  }
+
+  if (!found) {
+    input.value=''; input.placeholder='Ticket não encontrado';
+    setTimeout(()=>{ input.placeholder='Buscar Ticket...'; },1800);
+    return;
+  }
+  openModal(found.dataKey, found.isRal, found.title, found.item.ticket);
+  input.select();
+}
+
+function generateTicketURL(ticketStr, isRal, desig) {
+  if (!ticketStr||ticketStr==='N/D') return '#';
+  const m = ticketStr.match(/(?:RAL|REC)?-?(\d+)\/(\d{4})/i);
+  if (!m) return '#';
+  const num = m[1], ano = m[2], rec = parseInt(num,10)+17267511;
+  if (isRal) return `http://10.13.54.150:20020/navegacao/framesetNivel2TarefaRal.cfm?iorigem=Consulta&tipo=RAL&num_recup=${num}&ano_recup=${ano}&recuperacao=${rec}&acaoDesc=&flag=999`;
+  return `http://10.13.54.150:20020/navegacao/framesetNivel2TarefaRec.cfm?exibe_msg=SIM&iorigem=Consulta&itemAtual=1&tipo=REC&num_recup=${num}&designacao=${encodeURIComponent(desig||'')}&ano_recup=${ano}&recuperacao=${rec}&acaoDesc=&flag=999`;
+}
+
+function openTicketWindow(url) {
+  const w=1200,h=800,l=(screen.width/2)-(w/2),t=(screen.height/2)-(h/2);
+  window.open(url,'TicketWindow',`width=${w},height=${h},top=${t},left=${l},scrollbars=yes,resizable=yes,status=no,toolbar=no,menubar=no`);
+}
+
+function copyDesignations() {
+  if (!window.currentDesignationsToCopy) return;
+  navigator.clipboard.writeText(window.currentDesignationsToCopy).then(() => {
+    const btn = document.getElementById('copy-desig-btn');
+    btn.textContent='COPIADO COM SUCESSO!'; btn.style.background='#10b981'; btn.style.color='#000';
+    setTimeout(()=>{ btn.textContent='Copiar Designações'; btn.style.background='#11151b'; btn.style.color='#fff'; },2000);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   GERAÇÃO DO HTML DO DASHBOARD E LOOP
+═══════════════════════════════════════════════════════ */
+function generateMyAreasHTML(title, regionData, isRal) {
+  if (!userSavedAreas||!userSavedAreas.length) return '';
+  const flat = getFlatCFData(regionData);
+  const tk   = isRal?'ral':'rec';
+  const key  = `MY_AREAS_${title}`;
+  window.modalData[tk][key] = [];
+  let total=0, cfCards='';
+  userSavedAreas.forEach(cf => {
+    const val = flat[cf]||0; total+=val;
+    if (window.modalData[tk][cf]) window.modalData[tk][key].push(...window.modalData[tk][cf]);
+    let cls='bg-green'; if(val>9)cls='bg-red'; else if(val>5)cls='bg-yellow';
+    const dh = getDeltaIndicator(tk,cf,val);
+    cfCards+=`<div class="cf-col">
+      <div class="label-top">${cf} ${dh} <span class="icon-ext">↗</span></div>
+      <button class="card cf-card ${cls}" onclick="openModal('${cf}',${isRal},'${title} :: ${cf}')">
+        <span class="animate-num" data-val="${val}">0</span>
+      </button></div>`;
+  });
+  let rtCls='bg-green'; if(total>49)rtCls='bg-red'; else if(total>29)rtCls='bg-yellow';
+  return `<div class="region-row my-areas-row">
+    <div class="region-total-col">
+      <div class="label-top" style="color:#fff;">MINHAS ÁREAS <span class="icon-ext">↗</span></div>
+      <button class="card region-card ${rtCls}" onclick="openModal('${key}',${isRal},'MINHAS ÁREAS ${title}')">
+        <span class="animate-num" data-val="${total}">0</span>
+      </button>
+    </div>
+    <div class="cfs-grid">${cfCards}</div>
+  </div>`;
+}
+
+function generateColumnHTML(title, regionData, totalRecords, isRal) {
+  let gCls='bg-green'; if(totalRecords>49)gCls='bg-red'; else if(totalRecords>29)gCls='bg-yellow';
+  let html=`<div class="dashboard-col">
+    <div class="col-title">${title}</div>
+    <div class="grand-total-section">
+      <div class="label-top">TOTAL ${title} RRE <span class="icon-ext">↗</span></div>
+      <button class="card grand-card ${gCls}" onclick="openModal('ALL',${isRal},'TOTAL ${title} RRE')">
+        <span class="animate-num" data-val="${totalRecords}">0</span>
+      </button>
+    </div>`;
+
+  if (userSavedAreas&&userSavedAreas.length) {
+    html += generateMyAreasHTML(title, regionData, isRal);
+  } else {
+    for (const [rn, data] of Object.entries(regionData)) {
+      let rtCls='bg-green'; if(data.total>49)rtCls='bg-red'; else if(data.total>29)rtCls='bg-yellow';
+      html+=`<div class="region-row">
+        <div class="region-total-col">
+          <div class="label-top">TOTAL ${title} ${rn} <span class="icon-ext">↗</span></div>
+          <button class="card region-card ${rtCls}" onclick="openModal('${rn}',${isRal},'TOTAL ${title} ${rn}')">
+            <span class="animate-num" data-val="${data.total}">0</span>
+          </button>
+        </div><div class="cfs-grid">`;
+      for (const [cfKey,val] of Object.entries(data.items)) {
+        let cls='bg-green'; if(val>9)cls='bg-red'; else if(val>5)cls='bg-yellow';
+        const dh=getDeltaIndicator(isRal?'ral':'rec',cfKey,val);
+        html+=`<div class="cf-col">
+          <div class="label-top">${cfKey} ${dh} <span class="icon-ext">↗</span></div>
+          <button class="card cf-card ${cls}" onclick="openModal('${cfKey}',${isRal},'${title} :: ${cfKey}')">
+            <span class="animate-num" data-val="${val}">0</span>
+          </button></div>`;
+      }
+      html+=`</div></div>`;
+    }
+  }
+  html+=`</div>`;
+  return html;
+}
+
+async function loadAll() {
+  document.getElementById('status-dot').style.background='#d49800';
+  if (countdownTimer) clearInterval(countdownTimer); 
+
+  try {
+    const [ralText, recText] = await Promise.all([
+      fetch(`${URLS.ral}?_=${Date.now()}`,{cache:'no-store'}).then(r=>r.text()),
+      fetch(`${URLS.rec}?_=${Date.now()}`,{cache:'no-store'}).then(r=>r.text())
+    ]);
+    const ralRes = parseRaw(ralText, true);
+    const recRes = parseRaw(recText, false);
+    const ralR   = buildRegionData(ralRes.counts, ralRes.details, true);
+    const recR   = buildRegionData(recRes.counts, recRes.details, false);
+
+    computeFlatCFCounts(ralR, recR);
+    appState.currentSnapshot.ral = buildSnapshotMap('ral');
+    appState.currentSnapshot.rec = buildSnapshotMap('rec');
+
+    const mg = document.getElementById('main-grid');
+    mg.innerHTML = generateColumnHTML('RAL',ralR,ralRes.total,true) + generateColumnHTML('REC',recR,recRes.total,false);
+
+    document.querySelectorAll('.animate-num').forEach(el => {
+      const v = parseInt(el.getAttribute('data-val'),10);
+      if (isFirstLoad) animateValue(el,0,v,800); else el.innerHTML=v;
+    });
+
+    if (isFirstLoad) {
+        loadInboxState();
+        if (appState.lastSnapshotKeys.ral.size > 0 || appState.lastSnapshotKeys.rec.size > 0) {
+            updateInboxWithNewEntries(true);
+        } else {
+            renderInbox();
+        }
+    } else {
+        updateInboxWithNewEntries(false);
+    }
+
+    appState.previousCounts = { ral:{...appState.currentCounts.ral}, rec:{...appState.currentCounts.rec} };
+    appState.lastSnapshotKeys.ral = new Set(appState.currentSnapshot.ral.keys());
+    appState.lastSnapshotKeys.rec = new Set(appState.currentSnapshot.rec.keys());
+    saveInboxState();
+
+    isFirstLoad = false;
+
+    document.getElementById('status-dot').style.background='#2e7d32';
+    document.getElementById('last-update').textContent = new Date().toLocaleTimeString('pt-BR');
+    resetCountdown();
+  } catch (err) {
+    document.getElementById('status-dot').style.background='#c62828';
+    document.getElementById('main-grid').innerHTML=`<div style="text-align:center;grid-column:1/-1;color:#c62828;font-size:24px;padding-top:40px;">Falha de comunicação: ${escapeHtml(err.message)}</div>`;
+    resetCountdown(); 
+  }
+}
+
+function resetCountdown() {
+  countdownVal = INTERVAL/1000;
+  if (countdownTimer) clearInterval(countdownTimer);
+  
+  countdownTimer = setInterval(() => {
+    countdownVal--;
+    document.getElementById('countdown').textContent=`Atualiza em ${Math.floor(countdownVal/60)}:${String(countdownVal%60).padStart(2,'0')}`;
+    if (countdownVal <= 0) {
+        clearInterval(countdownTimer);
+        document.getElementById('countdown').textContent = "Atualizando...";
+        loadAll();
+    }
+  },1000);
+}
+
+document.getElementById('ticket-search-btn').addEventListener('click', searchTicket);
+document.getElementById('ticket-search-input').addEventListener('keydown', e => { if(e.key==='Enter') searchTicket(); });
+document.querySelector('.modal-body').addEventListener('scroll', closeStatusPortal, { passive:true });
+
+updateBellState();
+loadAll();
+</script>
+</body>
+</html>
