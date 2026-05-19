@@ -2401,7 +2401,7 @@ function updateInboxWithNewEntries(isStartup = false) {
   ['ral', 'rec'].forEach(tk => {
     const prev    = appState.lastSnapshotKeys[tk];
     const current = appState.currentSnapshot[tk];
-    if (isStartup && prev.size === 0) return;
+    if (prev.size === 0) return;
     current.forEach((item, identity) => {
       if (prev.has(identity)) return;
       if (!userSavedAreas.includes(item.cfOrigem)) return;
@@ -2639,6 +2639,7 @@ async function loadAll() {
     if (!isFirstLoad) {
       appState.allNewIdentities = { ral: new Set(), rec: new Set() };
       ['ral', 'rec'].forEach(tk => {
+        if (appState.lastSnapshotKeys[tk].size === 0) return;
         appState.currentSnapshot[tk].forEach((item, identity) => {
           if (!appState.lastSnapshotKeys[tk].has(identity))
             appState.allNewIdentities[tk].add(identity);
