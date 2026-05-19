@@ -1217,7 +1217,10 @@
         <div class="inbox-title">Novas Entradas</div>
         <div class="inbox-badge" id="inbox-count">0</div>
       </div>
-      <button class="btn-inbox-toggle" id="btn-inbox-toggle" onclick="toggleInboxBody()">Ocultar</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn-inbox-toggle" id="btn-inbox-ack-all" onclick="acknowledgeAllInboxItems()" style="display:none;">Marcar Tudo</button>
+        <button class="btn-inbox-toggle" id="btn-inbox-toggle" onclick="toggleInboxBody()">Ocultar</button>
+      </div>
     </div>
 
     <div class="inbox-body-wrap" id="inbox-body-wrap">
@@ -2419,6 +2422,9 @@ function renderInbox() {
   const total = appState.inboxItems.length;
   document.getElementById('inbox-count').textContent = total;
 
+  const btnAll = document.getElementById('btn-inbox-ack-all');
+  if (btnAll) btnAll.style.display = total > 0 ? '' : 'none';
+
   renderInboxType('ral', appState.inboxItems.filter(i => i.typeKey === 'ral'));
   renderInboxType('rec', appState.inboxItems.filter(i => i.typeKey === 'rec'));
 }
@@ -2474,6 +2480,13 @@ function renderInboxType(tk, items) {
         `width=${w},height=${h},top=${Math.floor((screen.height-h)/2)},left=${Math.floor((screen.width-w)/2)},scrollbars=yes,resizable=yes`);
     }
   };
+}
+
+function acknowledgeAllInboxItems() {
+  appState.inboxItems.forEach(i => appState.acknowledgedInboxKeys.add(i.identity));
+  appState.inboxItems = [];
+  renderInbox();
+  saveInboxState();
 }
 
 function acknowledgeInboxItem(identity) {
