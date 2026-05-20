@@ -1532,9 +1532,11 @@ const URLS = {
 };
 const INTERVAL    = 300000;
 const CF_COL      = 'CF Exec.';
-const STORAGE_TABLE  = 'sir_table_state_v5';
-const STORAGE_INBOX  = 'sir_inbox_state_v5';
-const STORAGE_TICKET = 'sir_ticket_state_v5';
+const STORAGE_TABLE      = 'sir_table_state_v5';
+const STORAGE_INBOX      = 'sir_inbox_state_v5';
+const STORAGE_TICKET     = 'sir_ticket_state_v5';
+const STORAGE_NEW_TS     = 'sir_new_tickets_v5';
+const NEW_TICKET_WINDOW  = 30 * 60 * 1000; // 30 minutos em ms
 const EVENT_COLORS  = ['none','red','blue','green','yellow','purple','orange'];
 
 const REGIONS = {
@@ -1596,7 +1598,8 @@ const appState = {
   currentModalType:    null,
   currentModalKey:     null,
   inboxBodyVisible:    true,
-  ticketStates:        {}   // identity → { eventColor, obs, obsStatus, ts }
+  ticketStates:        {},  // identity → { eventColor, obs, obsStatus, ts }
+  newTicketTimestamps: new Map()  // identity → firstSeenAt (ms)
 };
 
 /* ═══════════════════════════════════════════════════
@@ -2083,6 +2086,24 @@ function restoreTableState(tbody, saved) {
    SINCRONIZAÇÃO GLOBAL DE TICKETS
    Persiste cor, nota e status por identity, independente de qual CF/view está aberto.
 ═══════════════════════════════════════════════════ */
+/* ── Timestamps de novos tickets (janela de 30 min) ── */
+function loadNewTicketTimestamps() {
+  try {
+    const raw    = JSON.parse(localStorage.getItem(STORAGE_NEW_TS) || '{}');
+    const cutoff = Date.now() - NEW_TICKET_WINDOW;
+    appState.newTicketTimestamps = new Map();
+    for (const [id, ts] of Object.entries(raw)) {
+      if (ts > cutoff) appState.newTicketTimestamps.set(id, ts);
+    }
+  } catch(e) { appState.newTicketTimestamps = new Map(); }
+}
+
+function persistNewTicketTimestamps() {
+  const obj = {};
+  appState.newTicketTimestamps.forEach((ts, id) => { obj[id] = ts; });
+  localStorage.setItem(STORAGE_NEW_TS, JSON.stringify(obj));
+}
+
 function loadTicketStates() {
   try {
     const raw    = JSON.parse(localStorage.getItem(STORAGE_TICKET) || '{}');
@@ -2571,7 +2592,18 @@ function cleanupStorage() {
     if (changed) { all._ts = ts; localStorage.setItem(STORAGE_TABLE, JSON.stringify(all)); }
   } catch(e) {}
 
-  // 2. Estados globais de ticket — remove entradas com mais de 24h
+  // 2. Timestamps de novos tickets — remove entradas expiradas (> 30 min)
+  try {
+    const raw    = JSON.parse(localStorage.getItem(STORAGE_NEW_TS) || '{}');
+    const cutoff = Date.now() - NEW_TICKET_WINDOW;
+    let changed  = false;
+    for (const id of Object.keys(raw)) {
+      if (raw[id] < cutoff) { delete raw[id]; changed = true; }
+    }
+    if (changed) localStorage.setItem(STORAGE_NEW_TS, JSON.stringify(raw));
+  } catch(e) {}
+
+  // 3. Estados globais de ticket — remove entradas com mais de 24h
   try {
     const ts = JSON.parse(localStorage.getItem(STORAGE_TICKET) || '{}');
     let changed = false;
@@ -2877,17 +2909,38 @@ async function loadAll() {
     appState.currentSnapshot.ral = buildSnapshotMap('ral');
     appState.currentSnapshot.rec = buildSnapshotMap('rec');
 
-    /* Detectar novos tickets ANTES de atualizar lastSnapshotKeys */
+    /* Detectar novos tickets e manter destaque por 30 min */
+    const now = Date.now();
+
+    // Descoberta: tickets que apareceram neste ciclo (não no snapshot anterior)
     if (!isFirstLoad) {
-      appState.allNewIdentities = { ral: new Set(), rec: new Set() };
       ['ral', 'rec'].forEach(tk => {
         if (appState.lastSnapshotKeys[tk].size === 0) return;
         appState.currentSnapshot[tk].forEach((item, identity) => {
-          if (!appState.lastSnapshotKeys[tk].has(identity))
-            appState.allNewIdentities[tk].add(identity);
+          if (!appState.lastSnapshotKeys[tk].has(identity) &&
+              !appState.newTicketTimestamps.has(identity)) {
+            appState.newTicketTimestamps.set(identity, now);
+          }
         });
       });
     }
+
+    // Construir allNewIdentities a partir de todos os timestamps dentro da janela
+    appState.allNewIdentities = { ral: new Set(), rec: new Set() };
+    appState.newTicketTimestamps.forEach((firstSeen, identity) => {
+      if (now - firstSeen >= NEW_TICKET_WINDOW) {
+        // Expirou — remove da memória (será removido do storage no próximo persist)
+        appState.newTicketTimestamps.delete(identity);
+        return;
+      }
+      const tk = identity.split('::')[0];
+      if ((tk === 'ral' || tk === 'rec') &&
+          appState.currentSnapshot[tk]?.has(identity)) {
+        appState.allNewIdentities[tk].add(identity);
+      }
+    });
+
+    persistNewTicketTimestamps();
 
     /* Renderizar dashboard */
     document.getElementById('main-grid').innerHTML =
@@ -3478,6 +3531,9 @@ renderSelectedCfTags();
 
 // Limpa dados salvos com mais de 24h
 cleanupStorage();
+
+// Carrega timestamps de novos tickets (janela de 30 min, persiste entre reloads)
+loadNewTicketTimestamps();
 
 // Carrega estados globais de ticket (cor, nota, status) — sincronização entre tabelas
 loadTicketStates();
