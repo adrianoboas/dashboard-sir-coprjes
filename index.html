@@ -1532,8 +1532,9 @@ const URLS = {
 };
 const INTERVAL    = 300000;
 const CF_COL      = 'CF Exec.';
-const STORAGE_TABLE = 'sir_table_state_v5';
-const STORAGE_INBOX = 'sir_inbox_state_v5';
+const STORAGE_TABLE  = 'sir_table_state_v5';
+const STORAGE_INBOX  = 'sir_inbox_state_v5';
+const STORAGE_TICKET = 'sir_ticket_state_v5';
 const EVENT_COLORS  = ['none','red','blue','green','yellow','purple','orange'];
 
 const REGIONS = {
@@ -1594,7 +1595,8 @@ const appState = {
   acknowledgedInboxKeys: new Set(),
   currentModalType:    null,
   currentModalKey:     null,
-  inboxBodyVisible:    true
+  inboxBodyVisible:    true,
+  ticketStates:        {}   // identity → { eventColor, obs, obsStatus, ts }
 };
 
 /* ═══════════════════════════════════════════════════
@@ -1823,6 +1825,7 @@ function cycleEventColor(dot) {
   const nxt = EVENT_COLORS[(EVENT_COLORS.indexOf(cur) + 1) % EVENT_COLORS.length];
   row.dataset.eventColor = nxt;
   dot.className = `color-cycle-dot ev-${nxt}`;
+  persistTicketState(row.dataset.identity, { eventColor: nxt });
   saveTableState();
 }
 
@@ -1871,6 +1874,7 @@ function showColorPicker(e, row) {
       row.dataset.eventColor = color;
       const dot = row.querySelector('.color-cycle-dot');
       if (dot) dot.className = `color-cycle-dot ev-${color}`;
+      persistTicketState(row.dataset.identity, { eventColor: color });
       saveTableState();
       removeColorPicker();
     });
@@ -2001,7 +2005,9 @@ function startAddObs(btn) {
 function confirmObs(btn) {
   const wrap = btn.closest('.obs-input-wrap');
   const val  = wrap.querySelector('.obs-input').value.trim();
+  const row  = btn.closest('tr');
   wrap.closest('td').innerHTML = buildObsHTML(val);
+  if (row) persistTicketState(row.dataset.identity, { obs: val });
   saveTableState();
 }
 
@@ -2010,7 +2016,9 @@ function cancelObs(btn) {
 }
 
 function deleteObs(btn) {
+  const row = btn.closest('tr');
   btn.closest('td').innerHTML = buildObsHTML('');
+  if (row) persistTicketState(row.dataset.identity, { obs: '' });
   saveTableState();
 }
 
@@ -2068,8 +2076,63 @@ function restoreTableState(tbody, saved) {
     const obsStatusCell = row.querySelector('td.obs-status-col');
     if (obsStatusCell) obsStatusCell.innerHTML = buildObsStatusHTML(obsStatus);
   });
-  // Posicionar pinados no fundo após restaurar
-  applyPinnedSort();
+  // Posicionar pinados no fundo após restaurar (será chamado novamente após ticket states)
+}
+
+/* ═══════════════════════════════════════════════════
+   SINCRONIZAÇÃO GLOBAL DE TICKETS
+   Persiste cor, nota e status por identity, independente de qual CF/view está aberto.
+═══════════════════════════════════════════════════ */
+function loadTicketStates() {
+  try {
+    const raw    = JSON.parse(localStorage.getItem(STORAGE_TICKET) || '{}');
+    const cutoff = Date.now() - 24 * 3600 * 1000;
+    appState.ticketStates = {};
+    for (const [id, data] of Object.entries(raw)) {
+      if (!data.ts || data.ts > cutoff) appState.ticketStates[id] = data;
+    }
+  } catch(e) { appState.ticketStates = {}; }
+}
+
+function persistTicketState(identity, updates) {
+  if (!identity) return;
+  const cur = appState.ticketStates[identity] || {};
+  const next = { ...cur, ...updates, ts: Date.now() };
+  // Se voltou ao estado neutro, remove a entrada para não inflar o storage
+  const isNeutral = (!next.eventColor || next.eventColor === 'none')
+                  && !next.obs
+                  && (!next.obsStatus || next.obsStatus === 'none');
+  if (isNeutral) {
+    delete appState.ticketStates[identity];
+  } else {
+    appState.ticketStates[identity] = next;
+  }
+  localStorage.setItem(STORAGE_TICKET, JSON.stringify(appState.ticketStates));
+}
+
+function applyTicketStatesToTbody(tbody) {
+  tbody.querySelectorAll('tr.ticket-row').forEach(row => {
+    const identity = row.dataset.identity;
+    if (!identity) return;
+    const st = appState.ticketStates[identity];
+    if (!st) return;
+
+    if (st.eventColor && st.eventColor !== 'none') {
+      row.dataset.eventColor = st.eventColor;
+      const dot = row.querySelector('.color-cycle-dot');
+      if (dot) dot.className = `color-cycle-dot ev-${st.eventColor}`;
+    }
+    if (st.obs !== undefined && st.obs !== '') {
+      const obsCell = row.querySelector('td.obs-cell');
+      if (obsCell) obsCell.innerHTML = buildObsHTML(st.obs);
+    }
+    if (st.obsStatus && st.obsStatus !== 'none') {
+      row.dataset.obsStatus = st.obsStatus;
+      row.classList.add('pinned-bottom');
+      const obsStatusCell = row.querySelector('td.obs-status-col');
+      if (obsStatusCell) obsStatusCell.innerHTML = buildObsStatusHTML(st.obsStatus);
+    }
+  });
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2162,7 +2225,11 @@ function openModal(dataKey, isRal, titleOverride, highlightTicket = null) {
 
     const saved = loadTableState(tk, dataKey);
     if (saved) restoreTableState(tbody, saved);
-    else applyPinnedSort(); // garante ordenação inicial mesmo sem estado salvo
+
+    // Sincronização global: aplica estado salvo por ticket (cor, nota, status)
+    // sobrepõe o estado de tabela, garantindo consistência em todas as views
+    applyTicketStatesToTbody(tbody);
+    applyPinnedSort();
 
     /* Event delegation — ticket e designação */
     tbody.onclick = e => {
@@ -2199,6 +2266,7 @@ function applyObsStatus(row, status) {
   row.classList.toggle('pinned-bottom', status !== 'none');
   const cell = row.querySelector('td.obs-status-col');
   if (cell) cell.innerHTML = buildObsStatusHTML(status);
+  persistTicketState(row.dataset.identity, { obsStatus: status });
   applyPinnedSort();
   saveTableState();
 }
@@ -2503,7 +2571,17 @@ function cleanupStorage() {
     if (changed) { all._ts = ts; localStorage.setItem(STORAGE_TABLE, JSON.stringify(all)); }
   } catch(e) {}
 
-  // 2. Itens do inbox — remove itens com mais de 24h
+  // 2. Estados globais de ticket — remove entradas com mais de 24h
+  try {
+    const ts = JSON.parse(localStorage.getItem(STORAGE_TICKET) || '{}');
+    let changed = false;
+    for (const id of Object.keys(ts)) {
+      if (ts[id].ts && ts[id].ts < cutoff24h) { delete ts[id]; changed = true; }
+    }
+    if (changed) localStorage.setItem(STORAGE_TICKET, JSON.stringify(ts));
+  } catch(e) {}
+
+  // 3. Itens do inbox — remove itens com mais de 24h
   try {
     const state = JSON.parse(localStorage.getItem(STORAGE_INBOX) || '{}');
     if (state.inboxItems?.length) {
@@ -2512,7 +2590,7 @@ function cleanupStorage() {
       if (state.inboxItems.length < antes)
         localStorage.setItem(STORAGE_INBOX, JSON.stringify(state));
     }
-    // 3. Acknowledged keys — limita a 500 entradas para não inflar o storage
+    // 4. Acknowledged keys — limita a 500 entradas para não inflar o storage
     if (state.acknowledgedKeys?.length > 500) {
       state.acknowledgedKeys = state.acknowledgedKeys.slice(-500);
       localStorage.setItem(STORAGE_INBOX, JSON.stringify(state));
@@ -3398,8 +3476,11 @@ iniciarTimerTorpedo();
 // Feature 4: exibe CFs selecionados no header
 renderSelectedCfTags();
 
-// Feature 5: limpa dados salvos com mais de 24h
+// Limpa dados salvos com mais de 24h
 cleanupStorage();
+
+// Carrega estados globais de ticket (cor, nota, status) — sincronização entre tabelas
+loadTicketStates();
 
 // Renderiza ícones Lucide nos elementos estáticos do header
 if (typeof lucide !== 'undefined') lucide.createIcons();
